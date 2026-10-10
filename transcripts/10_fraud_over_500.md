@@ -7,15 +7,15 @@
 
 **Customer:** There's an $800 charge on T10 I never made — this is fraud.
 
-**Agent:** I understand your concern. I'll escalate this to a human support agent who can look into this matter further. Could you please provide the email on file and the last 4 digits of your card for verification?
+**Agent:** I need to escalate this to a human support agent who can help you further. Could you please provide the email on file and the last 4 digits of your card for verification?
 
 **Customer:** judy@paylane.test, card ends 9999.
 
   - _tool_ `get_customer({"email": "judy@paylane.test"})` -> `{"id": "C-J", "name": "Customer J", "status": "active", "verified": true}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-J", "summary": "Customer reports an $800 fraudulent charge on transaction T10."})` -> `{"ticket_id": "TK-527844cf"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-J", "summary": "Customer reports an $800 fraudulent charge on transaction T10."})` -> `{"ticket_id": "TK-05e9d09f"}`
 
-**Agent:** I've escalated this issue to a human support agent, and they will follow up with you regarding the $800 charge on transaction T10. Your ticket ID is TK-527844cf. They'll be in touch soon to help resolve this.
+**Agent:** I've escalated this issue to a human support agent, and they will follow up with you regarding the $800 fraudulent charge on transaction T10. Your ticket ID is TK-05e9d09f.
 
 ## Checks
 

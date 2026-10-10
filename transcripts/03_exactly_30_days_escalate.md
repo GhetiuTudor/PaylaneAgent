@@ -7,7 +7,7 @@
 
 **Customer:** Refund T3 please, it's $30.
 
-**Agent:** Could you please provide the email on file and the last 4 digits of your card for verification?
+**Agent:** Could you please provide the email on file and the last 4 digits of your card for verification? Once verified, I'll be able to assist you with the refund.
 
 **Customer:** carol@paylane.test, card ends 2222.
 
@@ -15,9 +15,9 @@
 
   - _tool_ `get_transaction({"customer_id": "C-C", "txn_id": "T3"})` -> `{"amount": 30.0, "date": "2026-09-10", "merchant": "CafeNine", "status": "settled", "age_days": 30}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-C", "summary": "Refund request for transaction T3, $30, settled, but age_days is 30, needs human review."})` -> `{"ticket_id": "TK-803b4050"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-C", "summary": "Refund request for transaction T3, $30, settled, 30 days old."})` -> `{"ticket_id": "TK-79cd2298"}`
 
-**Agent:** I've escalated your refund request for transaction T3 to a human agent because it's 30 days old. They'll follow up with you soon.
+**Agent:** I've escalated your refund request for transaction T3 to a human support agent since it's 30 days old. They'll follow up with you soon.
 
 ## Checks
 

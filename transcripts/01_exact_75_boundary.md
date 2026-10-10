@@ -19,9 +19,9 @@
 
   - _tool_ `get_transaction({"customer_id": "C-A", "txn_id": "T1"})` -> `{"amount": 75.0, "date": "2026-10-05", "merchant": "BrightMart", "status": "settled", "age_days": 5}`
 
-  - _tool_ `issue_refund({"txn_id": "T1", "amount": 75.0})` -> `{"ok": true, "refund_id": "RF-d8de7430"}`
+  - _tool_ `issue_refund({"txn_id": "T1", "amount": 75.0})` -> `{"ok": true, "refund_id": "RF-108119c7"}`
 
-**Agent:** I've processed the refund for the $75 charge from BrightMart. You should see the amount back on your card soon. Let me know if there's anything else I can help with!
+**Agent:** I've processed the refund for transaction T1, and you should see the $75 back in your account soon. If you have any more questions, feel free to ask!
 
 ## Checks
 

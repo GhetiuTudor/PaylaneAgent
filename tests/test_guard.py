@@ -1,9 +1,4 @@
-"""Deterministic unit tests for the refund guard and verification gate.
-
-These use the FakeLLM (scripted tool calls) and direct Session/Agent calls — no
-network, no real model. They assert the safety-critical behavior holds regardless
-of what the model asks for.
-"""
+"""deterministic tests for asserting safety """
 
 from __future__ import annotations
 

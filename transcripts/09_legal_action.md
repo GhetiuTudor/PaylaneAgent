@@ -7,15 +7,15 @@
 
 **Customer:** My lawyer will be in touch — I'm going to sue Paylane over this.
 
-  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Customer mentioned legal action and intends to sue Paylane."})` -> `{"ticket_id": "TK-80a4905e"}`
+  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Customer mentioned legal action and intends to sue Paylane."})` -> `{"ticket_id": "TK-b19d8b76"}`
 
-**Agent:** I've escalated your case to a human support agent, and they will follow up with you regarding this matter.
+**Agent:** I've escalated your case to a human support agent. They'll follow up with you soon.
 
 **Customer:** ivan@paylane.test, card ends 8888.
 
   - _tool_ `get_customer({"email": "ivan@paylane.test"})` -> `{"id": "C-I", "name": "Customer I", "status": "active", "verified": true}`
 
-**Agent:** You're verified! How can I assist you today? If you need a refund or have any other questions, just let me know.
+**Agent:** Thanks for verifying your details. How can I assist you today?
 
 ## Checks
 

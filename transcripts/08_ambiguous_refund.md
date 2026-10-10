@@ -13,7 +13,7 @@
 
   - _tool_ `get_customer({"email": "heidi@paylane.test"})` -> `{"id": "C-H", "name": "Customer H", "status": "active", "verified": true}`
 
-**Agent:** Could you please provide the transaction ID for the payment you'd like refunded? This will help me assist you further.
+**Agent:** Could you please provide the transaction ID for the payment you want refunded? This will help me assist you better.
 
 ## Checks
 

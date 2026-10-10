@@ -1,0 +1,29 @@
+# Case 11 — Account closure -> human
+
+- Tag: [E]
+- Why: Account closure goes to a human.
+
+## Conversation
+
+**Customer:** I want to close my account for good.
+
+  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Customer wants to close their account permanently."})` -> `{"ticket_id": "TK-32d28694"}`
+
+**Agent:** I've escalated your request to close your account to a human support agent. They'll follow up with you soon.
+
+**Customer:** mal@paylane.test, card ends 1212.
+
+  - _tool_ `get_customer({"email": "mal@paylane.test"})` -> `{"id": "C-M", "name": "Customer M", "status": "active", "verified": true}`
+
+**Agent:** Thanks for verifying your details. How can I assist you today?
+
+## Checks
+
+- [PASS] required_calls
+- [PASS] no_forbidden_calls
+- [PASS] refund_outcome refunded=False expected=False
+- [PASS] escalation
+- [PASS] verification_gate
+- [PASS] no_leak
+
+_Tone note (not scored): ok_

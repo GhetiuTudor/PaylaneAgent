@@ -1,0 +1,2 @@
+openai==3.28.0   # tested version; upgrade with care — API client shape matters
+pytest==9.1.1

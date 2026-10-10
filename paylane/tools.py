@@ -1,9 +1,9 @@
-"""The four mock Paylane API tools plus an in-memory data store.
+"""four mock Paylane API tools + an in-memory data store.
 
 Tools are plain functions over a `Store` dict. They return JSON-serialisable
-dicts, mirroring the spec. No full card number is ever stored — only `card_last4`.
+dicts, mirroring the spec. No full card number is ever stored, only `card_last4`.
 Verification, scrubbing and the refund guard live in `agent.py`, not here, so this
-file stays a faithful mock of the supplied API.
+file stays a mock of the supplied API.
 """
 
 from __future__ import annotations
@@ -18,20 +18,18 @@ def _iso_days_ago(days: int) -> str:
 
 
 def make_store(customers: list[dict], transactions: list[dict]) -> dict[str, Any]:
-    """Build a store from plain seed rows.
+    """Build a store from seed rows
 
     customer row: {email, name, card_last4, status}
     transaction row: {txn_id, customer_id, amount, days_ago, merchant, status}
     """
     return {
-        "customers": {c["email"]: dict(c) for c in customers},
-        "transactions": {
-            t["txn_id"]: {**t, "date": _iso_days_ago(t["days_ago"])} for t in transactions
-        },
+        "customers": {c["email"]: dict(c) for c in customers}, #email becomes the lookup key and the value is a separate object 
+        "transactions": { t["txn_id"]: {**t, "date": _iso_days_ago(t["days_ago"])} for t in transactions }, #txn_id becomes the key and a separate object + date is the value 
     }
 
 
-# --- the four tools ---------------------------------------------------------
+# tools
 
 def get_customer(store: dict, email: str) -> dict:
     c = store["customers"].get(email)
@@ -42,7 +40,7 @@ def get_customer(store: dict, email: str) -> dict:
         "name": c["name"],
         "card_last4": c["card_last4"],
         "status": c["status"],
-        "verified": False,  # per spec; real verification is computed by the agent
+        "verified": False,  #real verification is computed by the agent as per the spec 
     }
 
 

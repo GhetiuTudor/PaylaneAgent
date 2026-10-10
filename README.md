@@ -1,74 +1,93 @@
-# Paylane Support Agent (PoC)
+# Paylane Support Agent — PoC
 
-A small, readable proof-of-concept support agent for Paylane (cards, transfers,
-refunds). It follows the Paylane policy, calls four mock API tools, and is backed
-by evals. This is a take-home PoC, not production infrastructure.
+AI support agent for Paylane (cards, transfers, refunds). Handles verification,
+auto-refunds, and escalation. Built as a take-home assignment.
 
-## What it does
+---
 
-- Verifies a customer (email on file + last 4 of card) before sharing or acting
-  on any account detail.
-- Auto-approves refunds **≤ $75** on **settled** transactions **under 30 days**
-  old, for **verified** customers, and never refunds the same transaction twice.
-- Escalates everything else it shouldn't do itself: refunds over $75 or 30+ days
-  old, frozen cards, legal action, fraud over $500, and account closure.
-- Never reveals the stored email or card digits.
-
-## What it won't do
-
-- Unfreeze a card, or guess why a card is frozen (the API gives no reason).
-- Refund a pending transaction (a conservative assumption — see below).
-- Act on account details for anyone who fails verification.
-
-## Layout
+## Architecture
 
 ```
 paylane/
-  policy.py   # refund eligibility rules — single source of truth for enforcement
-  tools.py    # the 4 mock API tools + in-memory data (only card_last4, no full PAN)
-  llm.py      # provider-agnostic client: real OpenAI client + FakeLLM for tests
-  agent.py    # system prompt + rulebook, tool-calling loop, verification, refund guard
+  policy.py   <- refund eligibility rules
+  tools.py    <- 4 mock API functions + in-memory store
+  llm.py      <- provider-agnostic client (OpenAIClient + FakeLLM for tests)
+  agent.py    <- system prompt, tool loop, verification gate, refund guard
+
 evals/
-  cases.py    # the 12 conversations, each with its own expected outcomes
-  runner.py   # runs them on a real LLM, writes transcripts, scores hard/soft checks
+  cases.py    <- 12 conversations with expected outcomes
+  runner.py   <- runs on real LLM, scores, writes transcripts
+
 tests/
-  test_guard.py  # deterministic unit tests (FakeLLM) for the guard + verification gate
-transcripts/   # generated per-case transcripts
+  test_guard.py <- deterministic unit tests (no network, no key)
+
+transcripts/  <- generated per-run markdown transcripts
+chat.py       <- interactive CLI for manual testing
 ```
 
-## Policy vs. assumptions vs. safeguards
+---
 
-- **Explicit Paylane policy** is tagged `[E]` in `policy.py` and the rulebook.
-- **Conservative assumptions** (tagged `[B]`): $75 inclusive; "under 30 days" so
-  exactly 30 escalates; pending not refundable; no over-refund. These are choices
-  made where the brief is silent.
-- **Engineering safeguards**: the refund guard re-checks policy from live data and
-  hard-blocks ineligible refunds even if the model asks; verification is computed
-  deterministically in code; the model never receives the email or card digits.
+## Key architecture decisions
 
-## Run it
+**Deterministic refund guard.** `issue_refund` is wrapped in a code-level check
+that re-reads the transaction from the store and re-runs eligibility before
+allowing the call through. The model's judgment is a first line; this is the
+backstop. No unsafe refund can execute regardless of what the model asks for.
+
+**Secrets never reach the model.** After `get_customer`, the dispatcher strips
+`card_last4` and `email` before returning to the model. Even a jailbroken model
+can't leak values it never had.
+
+**Verification in code, not by the model.** The API always returns `verified: false`.
+The dispatcher computes verification itself by comparing the customer's claimed
+email and last4 against the record, then passes only `{verified: true/false}` to
+the model.
+
+**Computed facts, not model inference.** `get_transaction` appends `age_days`
+(computed from the date in code) so the model never has to do date arithmetic.
+This directly fixed the one failure found in testing — see below.
+
+**Eval oracle is independent of policy.py.** Each of the 12 cases hardcodes its
+expected outcomes. A bug introduced into the production policy logic can still fail
+the tests. Score: **12/12 on gpt-4o**.
+
+---
+
+## How to run it
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# Unit tests (no network, no key needed)
-pytest
+# Unit tests — no network, no key needed
+pytest tests/ -v
 
-# The 12 conversations against a real LLM
-export OPENAI_API_KEY=sk-...     # set your key in the terminal
-python -m evals.runner           # writes transcripts/ and prints a score
-python -m evals.runner --only 05 07   # run a subset
-python -m evals.runner --model gpt-4o # pick a model
+# 12 eval conversations (requires OPENAI_API_KEY)
+export OPENAI_API_KEY=sk-...
+python -m evals.runner                    # all 12, gpt-4o
+python -m evals.runner --only 05 07      # subset by case ID
+
+# Interactive CLI
+python chat.py
 ```
 
-The `FakeLLM` is only used by the unit tests. The 12 evaluation conversations run
-against the real model.
+---
 
-## Evals
+## Failure found and fixed
 
-Each case independently declares its expected tool calls and outcome (not computed
-from `policy.py`, so a bug in the policy can still fail a case). Hard checks decide
-pass/fail: required calls present, forbidden calls absent, refund outcome correct,
-verification enforced before account access, and no secret leaked. Tone is a soft,
-reported note and never fails a case.
+**Case 03 — 30-day-old transaction, must escalate. First run: FAIL.**
+
+The model attempted `issue_refund` on a charge that was exactly 30 days old and
+did not escalate. The refund guard blocked it (`ok: false, age_days >= 30`) — no
+money moved — but the behavior was wrong.
+
+**Root cause:** `get_transaction` returned a raw ISO date. The model had to compute
+the age itself and got the boundary wrong. LLMs are unreliable at date arithmetic.
+
+**Fix:** The dispatcher now computes `age_days` and includes it in the result.
+The system prompt was updated to use `age_days` directly and to be explicit that
+`>= 30` is not eligible and requires `escalate_to_human`.
+
+**Eval unchanged** — same oracle, same expectations. Re-run: 12/12.
+
+**Principle:** Code computes facts. The model orchestrates and talks.

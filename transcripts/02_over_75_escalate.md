@@ -15,7 +15,7 @@
 
   - _tool_ `get_transaction({"customer_id": "C-B", "txn_id": "T2"})` -> `{"amount": 120.0, "date": "2026-10-07", "merchant": "GadgetHub", "status": "settled", "age_days": 3}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-B", "summary": "Customer requests a refund for transaction T2, amount $120, settled, 3 days old."})` -> `{"ticket_id": "TK-3cab9587"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-B", "summary": "Customer requests a refund for transaction T2, amount $120, settled, 3 days old."})` -> `{"ticket_id": "TK-cb998ef1"}`
 
 **Agent:** I've escalated your refund request for the $120 transaction with GadgetHub to a human support agent. They'll follow up with you soon.
 

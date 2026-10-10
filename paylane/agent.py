@@ -2,7 +2,7 @@
 the deterministic refund guard.
 
 Design notes:
-- Exactly the four spec tools are exposed to the model.
+- the four spec tools are exposed to the model.
 - Verification is computed deterministically inside the dispatcher after
   get_customer. The model only ever sees a safe {verified: bool} plus an opaque
   id (and name/status once verified). card_last4 and the email are never sent to
@@ -170,7 +170,7 @@ class Agent:
         if not self.s.messages:
             self.s.messages.append({"role": "system", "content": SYSTEM_PROMPT})
 
-    # --- public API ---------------------------------------------------------
+    # public API
 
     def run_conversation(self, user_turns: list[str]) -> None:
         for turn in user_turns:
@@ -179,7 +179,7 @@ class Agent:
             self.s.transcript.append({"role": "user", "content": turn})
             self._run_until_reply()
 
-    # --- loop ---------------------------------------------------------------
+    # loop
 
     def _run_until_reply(self) -> None:
         for _ in range(MAX_STEPS):
@@ -199,7 +199,7 @@ class Agent:
             self.s.messages.append({"role": "assistant", "content": text})
             self.s.transcript.append({"role": "assistant", "content": text})
             return
-        # Loop cap reached; close the turn cleanly.
+        # Loop cap reached- close the turn cleanly.
         self.s.transcript.append({"role": "assistant", "content": "(no reply)"})
 
     @staticmethod
@@ -236,7 +236,7 @@ class Agent:
             self._log("get_customer", {"email": email}, record)
             return record
 
-        # Deterministic verification: email on file AND last4 both match.
+        # Deterministic verification: email on file and last4 both match.
         self.s.state.customer_id = record["id"]
         verified = (
             self.s.state.claimed_email is not None
@@ -246,7 +246,7 @@ class Agent:
         if verified:
             self.s.state.verified = True
 
-        # Scrub: never expose email or card_last4; hide details until verified.
+        # Scrub: never expose email or card_last4, hide details until verified.
         if self.s.state.verified:
             safe = {"id": record["id"], "name": record["name"],
                     "status": record["status"], "verified": True}
@@ -262,7 +262,7 @@ class Agent:
             return out
         out = tools.get_transaction(self.s.store, self.s.state.customer_id or "", txn_id)
         if "error" not in out:
-            out = {**out, "age_days": transaction_age_days(out["date"])}  # spare the model date math
+            out = {**out, "age_days": transaction_age_days(out["date"])}  #improvement 1 - this is why eval 3 failed the first time 
         self._log("get_transaction", {"txn_id": txn_id}, out)
         return out
 

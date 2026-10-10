@@ -1,8 +1,8 @@
-"""Provider-agnostic LLM client.
+"""Provider agnostic LLM client
 
-- `LLMClient` is the interface the agent depends on.
-- `OpenAIClient` is the one real provider (used for the 12 eval conversations).
-- `FakeLLM` is a deterministic scripted client for UNIT TESTS ONLY.
+- `LLMClient` is the interface the agent depends on
+- `OpenAIClient` is the one real provider (used for the 12 eval conversations)
+- `FakeLLM` is a deterministic scripted client for unit testing
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 
-@dataclass
+@dataclass # OpenAI already provides an object for this, but this makes it provider-agnostic - can be tested with any LLM 
 class ToolCall:
     id: str
     name: str
@@ -30,10 +30,10 @@ class LLMClient(Protocol):
 
 
 class OpenAIClient:
-    """Real provider. Reads the key from OPENAI_API_KEY."""
+    """Real provider. Reads the key from OPENAI_API_KEY"""
 
     def __init__(self, model: str = "gpt-4o-mini") -> None:
-        from openai import OpenAI  # imported lazily so tests don't need the SDK
+        from openai import OpenAI  # imported lazily so that this file can be loaded at test time with no SDK dependency 
 
         self.model = model
         self._client = OpenAI()
@@ -56,7 +56,7 @@ class OpenAIClient:
 class FakeLLM:
     """Deterministic client that replays a scripted list of ChatResults.
 
-    Unit tests only — never used for the 12 evaluation conversations.
+    Unit tests only.
     """
 
     def __init__(self, script: list[ChatResult]) -> None:

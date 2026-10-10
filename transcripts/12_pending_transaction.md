@@ -15,7 +15,7 @@
 
   - _tool_ `get_transaction({"customer_id": "C-N", "txn_id": "T12"})` -> `{"amount": 25.0, "date": "2026-10-07", "merchant": "QuickBite", "status": "pending", "age_days": 3}`
 
-**Agent:** The transaction is still pending, so I can't process the refund automatically. I've escalated this to a human support agent, and they'll follow up with you soon.
+**Agent:** The transaction T12 for $25 is still pending, so I can't process the refund automatically. I've escalated this to a human support agent, and they will follow up with you soon.
 
 ## Checks
 

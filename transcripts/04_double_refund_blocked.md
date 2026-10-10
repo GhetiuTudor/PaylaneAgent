@@ -7,7 +7,7 @@
 
 **Customer:** I don't think my refund for T4 came through, can you refund it again?
 
-**Agent:** Could you please provide the email on file and the last 4 digits of your card? I need to verify your account before I can assist with the refund.
+**Agent:** Could you please provide the email on file and the last 4 digits of your card so I can verify your account?
 
 **Customer:** dan@paylane.test, card ends 3333.
 
@@ -15,7 +15,7 @@
 
   - _tool_ `get_transaction({"customer_id": "C-D", "txn_id": "T4"})` -> `{"amount": 20.0, "date": "2026-10-06", "merchant": "BookNest", "status": "refunded", "age_days": 4}`
 
-**Agent:** The transaction T4 has already been refunded. If you have any further questions or need assistance, feel free to ask!
+**Agent:** The transaction T4 has already been refunded. If you have any further questions or need assistance, please let me know!
 
 ## Checks
 

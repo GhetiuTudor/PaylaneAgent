@@ -7,7 +7,7 @@
 
 **Customer:** I want to close my account for good.
 
-  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Customer wants to close their account."})` -> `{"ticket_id": "TK-621119b8"}`
+  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Customer wants to close their account."})` -> `{"ticket_id": "TK-95fbf3d1"}`
 
 **Agent:** I've escalated your request to close your account to a human support agent. They'll follow up with you soon.
 
@@ -15,7 +15,7 @@
 
   - _tool_ `get_customer({"email": "mal@paylane.test"})` -> `{"id": "C-M", "name": "Customer M", "status": "active", "verified": true}`
 
-**Agent:** Thanks for verifying your account. How can I assist you today?
+**Agent:** Your account is verified. How can I assist you further?
 
 ## Checks
 

@@ -1,0 +1,69 @@
+To: Head of Support, Paylane
+From: Tudor
+Subject: Support agent — what it does, what it won't, and what I need from you
+
+Hi,
+
+Here's a plain-language summary of the support agent before we talk about
+going live.
+
+---
+
+What it does
+
+The agent handles the most common support requests on its own:
+- It asks every customer for their email and last 4 card digits before doing
+  anything. If they don't match what's on file, it shares nothing and takes no
+  action — no exceptions.
+- It issues refunds automatically when the transaction is settled, under 30 days
+  old, $75 or less, and hasn't already been refunded.
+- For everything else it can't handle, it creates a ticket and hands the case to
+  your team with a short summary of the conversation.
+
+What it won't do
+
+- It won't refund anything over $75 or older than 30 days — those go straight to
+  your team.
+- It won't unfreeze a card, and it won't guess why a card was frozen. It tells the
+  customer the card is frozen and escalates.
+- It won't act on anything involving legal threats, fraud claims over $500, or
+  account closure — those go to a human immediately.
+- It won't promise anything the policy doesn't cover.
+
+One important note on safety: even if the AI model makes a mistake and tries to
+issue a refund it shouldn't, a hard code-level check will block it. The model's
+judgment is a first line; the code is the backstop. Refunds that shouldn't happen
+won't happen regardless of what the model says.
+
+---
+
+What I need from you before launch
+
+I made a few calls where the brief didn't give me a clear answer. I went
+conservative, but you should confirm these before we go live:
+
+1. Frozen card + eligible refund: right now any action on a frozen card goes to
+   your team. If a customer with a frozen card has a refund that would otherwise
+   qualify, should it still go through, or should frozen always mean escalate?
+
+2. Pending transactions: the agent won't refund a charge that hasn't settled yet.
+   Is that the right call, or should it handle pending differently?
+
+3. Fraud under $500: the brief says fraud over $500 goes to a human. I treat all
+   fraud claims as escalations regardless of amount. Should smaller fraud claims
+   follow the normal refund rules instead?
+
+4. Freeze reason: the brief mentions the agent can explain why a card is frozen,
+   but the API doesn't return a reason — just that the card is frozen. If you want
+   the agent to communicate the reason, that field needs to be added to the API.
+
+5. The $75 and 30-day boundaries: I treated $75 as inclusive (a $75 charge
+   qualifies) and 30 days as exclusive (a charge from exactly 30 days ago does
+   not). Please confirm that's right.
+
+---
+
+That's it. Happy to walk through the code or adjust any of the above once I hear
+back.
+
+Tudor

@@ -13,15 +13,18 @@
 
   - _tool_ `get_customer({"email": "nia@paylane.test"})` -> `{"id": "C-N", "name": "Customer N", "status": "active", "verified": true}`
 
-  - _tool_ `get_transaction({"customer_id": "C-N", "txn_id": "T12"})` -> `{"amount": 25.0, "date": "2026-10-07", "merchant": "QuickBite", "status": "pending", "age_days": 3}`
+  - _tool_ `get_transaction({"customer_id": "C-N", "txn_id": "T12"})` -> `{"amount": 25.0, "date": "2026-10-08", "merchant": "QuickBite", "status": "pending", "age_days": 3}`
 
-**Agent:** The transaction T12 for $25 is still pending, so I can't process the refund automatically. I've escalated this to a human support agent, and they will follow up with you soon.
+  - _tool_ `escalate_to_human({"customer_id": "C-N", "summary": "Refund request for transaction T12, amount $25, status pending, requires human review."})` -> `{"ticket_id": "TK-73ae84a0"}`
+
+**Agent:** I've escalated your refund request for transaction T12 to a human support agent since it's currently pending. They'll follow up with you soon.
 
 ## Checks
 
 - [PASS] required_calls
 - [PASS] no_forbidden_calls
 - [PASS] refund_outcome refunded=False expected=False
+- [PASS] escalation
 - [PASS] verification_gate
 - [PASS] no_leak
 

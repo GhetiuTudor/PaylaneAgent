@@ -7,17 +7,17 @@
 
 **Customer:** I want my money back for T2.
 
-**Agent:** Could you please provide the email on file and the last 4 digits of your card? I need to verify your account before proceeding with the refund request.
+**Agent:** Could you please provide the email on file and the last 4 digits of your card? Once I have that, I can look into the refund for transaction T2.
 
 **Customer:** Email bob@paylane.test, card ends 1111. It was $120.
 
   - _tool_ `get_customer({"email": "bob@paylane.test"})` -> `{"id": "C-B", "name": "Customer B", "status": "active", "verified": true}`
 
-  - _tool_ `get_transaction({"customer_id": "C-B", "txn_id": "T2"})` -> `{"amount": 120.0, "date": "2026-10-07", "merchant": "GadgetHub", "status": "settled", "age_days": 3}`
+  - _tool_ `get_transaction({"customer_id": "C-B", "txn_id": "T2"})` -> `{"amount": 120.0, "date": "2026-10-08", "merchant": "GadgetHub", "status": "settled", "age_days": 3}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-B", "summary": "Customer requests a refund for transaction T2, amount $120, settled, 3 days old."})` -> `{"ticket_id": "TK-cb998ef1"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-B", "summary": "Customer requests a refund for transaction T2, amount $120, settled, age 3 days."})` -> `{"ticket_id": "TK-8f1d26fc"}`
 
-**Agent:** I've escalated your refund request for the $120 transaction with GadgetHub to a human support agent. They'll follow up with you soon.
+**Agent:** I've escalated your refund request for transaction T2 to a human support agent. They'll follow up with you soon.
 
 ## Checks
 

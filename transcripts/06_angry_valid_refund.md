@@ -13,11 +13,11 @@
 
   - _tool_ `get_customer({"email": "frank@paylane.test"})` -> `{"id": "C-F", "name": "Customer F", "status": "active", "verified": true}`
 
-  - _tool_ `get_transaction({"customer_id": "C-F", "txn_id": "T6"})` -> `{"amount": 40.0, "date": "2026-10-05", "merchant": "RideNow", "status": "settled", "age_days": 5}`
+  - _tool_ `get_transaction({"customer_id": "C-F", "txn_id": "T6"})` -> `{"amount": 40.0, "date": "2026-10-06", "merchant": "RideNow", "status": "settled", "age_days": 5}`
 
-  - _tool_ `issue_refund({"txn_id": "T6", "amount": 40.0})` -> `{"ok": true, "refund_id": "RF-0ede0282"}`
+  - _tool_ `issue_refund({"txn_id": "T6", "amount": 40.0})` -> `{"ok": true, "refund_id": "RF-1b1c680e"}`
 
-**Agent:** I've processed the refund for the $40 charge from RideNow. You should see the amount back on your card soon. If there's anything else you need, just let me know!
+**Agent:** I've processed a refund for the $40 charge from RideNow. You should see the amount back on your card soon. If there's anything else you need, just let me know!
 
 ## Checks
 

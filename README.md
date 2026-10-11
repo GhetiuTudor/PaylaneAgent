@@ -87,7 +87,7 @@ the age itself and got the boundary wrong. LLMs are unreliable at date arithmeti
 The system prompt was tightened to use `age_days` directly: `>= 30` is not
 eligible, and the model must call `escalate_to_human`, not just say it will.
 
-Eval unchanged. Case 03: PASS. Score after fix: 10/12.
+Eval unchanged. Case 03: PASS.
 
 
 **Run 2 — Cases 02 and 09 — over-$75 refund and legal action, must escalate. FAIL.**

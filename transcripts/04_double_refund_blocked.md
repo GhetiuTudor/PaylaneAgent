@@ -13,7 +13,7 @@
 
   - _tool_ `get_customer({"email": "dan@paylane.test"})` -> `{"id": "C-D", "name": "Customer D", "status": "active", "verified": true}`
 
-  - _tool_ `get_transaction({"customer_id": "C-D", "txn_id": "T4"})` -> `{"amount": 20.0, "date": "2026-10-06", "merchant": "BookNest", "status": "refunded", "age_days": 4}`
+  - _tool_ `get_transaction({"customer_id": "C-D", "txn_id": "T4"})` -> `{"amount": 20.0, "date": "2026-10-07", "merchant": "BookNest", "status": "refunded", "age_days": 4}`
 
 **Agent:** The transaction T4 has already been refunded. If you have any further questions or need assistance, please let me know!
 

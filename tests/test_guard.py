@@ -117,3 +117,51 @@ def test_get_customer_scrubs_secrets_for_model():
     assert ev.result.get("verified") is True
     assert "card_last4" not in ev.result
     assert "email" not in ev.result
+
+
+#  security: cross-customer ownership and verification state
+
+def test_guard_blocks_cross_customer_refund():
+    """Guard must reject a refund for a transaction that belongs to another customer."""
+    store = make_store(
+        [
+            {"id": "C1", "email": "a@b.test", "name": "A", "card_last4": "4242", "status": "active"},
+            {"id": "C2", "email": "c@d.test", "name": "C", "card_last4": "9999", "status": "active"},
+        ],
+        [
+            {"txn_id": "T1", "customer_id": "C1", "amount": 30.0, "days_ago": 2, "merchant": "M", "status": "settled"},
+            {"txn_id": "T2", "customer_id": "C2", "amount": 30.0, "days_ago": 2, "merchant": "M", "status": "settled"},
+        ],
+    )
+    session = Session(store=store)
+    # Verify as C1, then attempt to refund C2's transaction T2.
+    agent = Agent(FakeLLM([
+        _call("get_customer", email="a@b.test"),
+        _call("issue_refund", txn_id="T2", amount=30.0),
+        ChatResult(content="done"),
+    ]), session)
+    agent.run_conversation(["refund T2, email a@b.test card ends 4242"])
+    ref = [e for e in session.tool_events if e.name == "issue_refund"][0]
+    assert ref.result["ok"] is False and ref.blocked
+    assert store["transactions"]["T2"]["status"] == "settled"  # C2's transaction untouched
+
+
+def test_verification_resets_on_new_customer_lookup():
+    """After verifying customer A, looking up customer B must not retain A's verified state."""
+    store = make_store(
+        [
+            {"id": "C1", "email": "a@b.test", "name": "A", "card_last4": "4242", "status": "active"},
+            {"id": "C2", "email": "c@d.test", "name": "C", "card_last4": "9999", "status": "active"},
+        ],
+        [],
+    )
+    session = Session(store=store)
+    # Verify as C1, then the model (mis)looks up C2.
+    agent = Agent(FakeLLM([
+        _call("get_customer", email="a@b.test"),   # C1 — verifies
+        _call("get_customer", email="c@d.test"),   # C2 — must reset verified
+        ChatResult(content="done"),
+    ]), session)
+    agent.run_conversation(["email a@b.test card ends 4242"])
+    assert session.state.verified is False          # C2 is NOT verified
+    assert session.state.customer_id == "C2"        # customer_id did switch to C2

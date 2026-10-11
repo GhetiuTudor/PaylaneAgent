@@ -25,7 +25,7 @@ from .policy import refund_eligibility, transaction_age_days
 MAX_STEPS = 6  # safety cap on tool-call loops per user turn
 
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
-LAST4_RE = re.compile(r"\b(\d{4})\b")
+LAST4_RE = re.compile(r"(?:ends?\s+|last\s*(?:4|four)\s*)(?:digits?\s*)?(?:are\s*)?(\d{4})\b", re.IGNORECASE)  # requires card-ending context to avoid matching amounts or txn IDs
 
 SYSTEM_PROMPT = """\
 You are Paylane's support agent for cards, transfers and refunds.
@@ -51,10 +51,11 @@ REFUNDS:
   status is settled, age_days is less than 30, the amount is $75 or less, and it
   was not already refunded. age_days of exactly 30 or more is NOT eligible.
 - If it is not auto-approvable (over $75, age_days 30 or more, pending, already
-  refunded), do NOT call issue_refund. You MUST call escalate_to_human and tell
-  the customer a human will follow up.
+  refunded), do NOT call issue_refund. Your very next action must be to call
+  escalate_to_human — do not reply to the customer first. Then tell them a human
+  will follow up.
 - Never refund the same transaction twice. If issue_refund returns ok:false, do
-  not say the refund went through — escalate instead.
+  not say the refund went through — call escalate_to_human instead.
 
 FROZEN CARDS:
 - You can tell the customer the card is frozen, but you cannot unfreeze it and you
@@ -236,8 +237,11 @@ class Agent:
             self._log("get_customer", {"email": email}, record)
             return record
 
-        # Deterministic verification: email on file and last4 both match.
+        # Reset: each get_customer call starts fresh so a prior verified session
+        # cannot carry over to a different customer.
+        self.s.state.verified = False
         self.s.state.customer_id = record["id"]
+        # Deterministic verification: email on file and last4 both match.
         verified = (
             self.s.state.claimed_email is not None
             and self.s.state.claimed_email.lower() == email.lower()
@@ -270,6 +274,11 @@ class Agent:
         txn = self.s.store["transactions"].get(txn_id)
         if txn is None:
             out = {"ok": False, "reason": "transaction_not_found"}
+            self._log("issue_refund", {"txn_id": txn_id, "amount": amount}, out, blocked=True)
+            return out
+        # Ownership: the transaction must belong to the verified customer.
+        if txn.get("customer_id") != self.s.state.customer_id:
+            out = {"ok": False, "reason": "transaction_not_owned_by_customer"}
             self._log("issue_refund", {"txn_id": txn_id, "amount": amount}, out, blocked=True)
             return out
         ok, reason = refund_eligibility(

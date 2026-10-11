@@ -7,15 +7,17 @@
 
 **Customer:** There's an $800 charge on T10 I never made — this is fraud.
 
-  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Customer reports an $800 fraudulent charge on transaction T10."})` -> `{"ticket_id": "TK-a3c97842"}`
-
-**Agent:** I've escalated your case to a human support agent. They'll be in touch with you soon to help resolve the issue.
+**Agent:** I'll escalate this to a human support agent right away to look into the fraud issue. They'll follow up with you soon.
 
 **Customer:** judy@paylane.test, card ends 9999.
 
   - _tool_ `get_customer({"email": "judy@paylane.test"})` -> `{"id": "C-J", "name": "Customer J", "status": "active", "verified": true}`
 
-**Agent:** Thanks for verifying your details. A human support agent will follow up with you soon regarding the fraudulent charge on transaction T10.
+  - _tool_ `get_transaction({"customer_id": "C-J", "txn_id": "T10"})` -> `{"amount": 800.0, "date": "2026-10-09", "merchant": "UnknownLLC", "status": "settled", "age_days": 2}`
+
+  - _tool_ `escalate_to_human({"customer_id": "C-J", "summary": "Customer reports a fraudulent charge of $800 on transaction T10."})` -> `{"ticket_id": "TK-a968bec5"}`
+
+**Agent:** I've escalated this issue to a human support agent to investigate the fraudulent charge of $800 on transaction T10. They'll follow up with you soon.
 
 ## Checks
 

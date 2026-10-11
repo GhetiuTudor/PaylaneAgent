@@ -74,7 +74,7 @@ python chat.py
 
 ---
 
-## Failures found and fixed
+## Failures I found and fixed
 
 **Run 1 — Case 03 — 30-day-old transaction, must escalate. FAIL.**
 
@@ -124,3 +124,97 @@ Score after fix: **12/12**.
 
 **Principle:** Code computes facts. The model orchestrates and talks. Safety must
 not depend on the model's judgment alone.
+
+---
+
+## Hardenings I would implement before production deployment
+
+This is a take-home proof of concept. Before handling real customers or moving
+money, I would complete the following work.
+
+### Make every policy action enforceable in code
+
+- Add a per-conversation policy state machine. Once legal action, account
+  closure, a qualifying fraud report, or a frozen card is detected, block
+  `issue_refund` and account-detail tools as appropriate, create/confirm the
+  human ticket, and prevent the model from overriding that state.
+- Determine fraud amount from an authorised transaction lookup rather than
+  trusting a number in the message. Define the safe behaviour while the amount
+  or transaction is unknown (conservatively, escalate).
+- Do not create unauthenticated account-specific tickets with customer ID
+  `unknown`. Decide whether an unverified legal report should create a generic,
+  rate-limited intake ticket or first request verification; then implement that
+  decision consistently.
+- Make escalation reliable: use an idempotency key, durable queue/retries and
+  explicit error handling. Tell the customer a ticket exists only after the
+  escalation service confirms it, provide a safe fallback if the tool or the
+  model loop fails.
+
+### Finish the money-movement contract
+
+- Confirm whether the $75 threshold applies to the original transaction, the
+  refund amount, or both. The current implementation deliberately uses the
+  original transaction amount, record that decision in the product policy.
+- Define full versus partial refunds. Either require `amount == transaction
+  amount`, or store refunded and remaining amounts and make partial refunds
+  atomic. The mock currently marks a transaction simply `refunded`, so it
+  cannot represent a partial refund correctly.
+- Validate amounts in integer minor currency units (not binary floats), require
+  a finite positive value, verify the currency, and reject malformed numeric
+  values such as `NaN`. Obtain transaction amounts, dates and status from the
+  payment ledger only.
+- Replace the in-memory store with a transactional, durable backend. Make
+  refund creation idempotent and atomic so concurrent requests cannot both pass
+  the “not already refunded” check. Persist the provider refund ID and handle
+  pending, failed, reversed and duplicate provider responses.
+- Use an agreed Paylane timezone and authoritative timestamps for the 30-day
+  calculation. Define handling for future dates, clock skew, daylight-saving
+  changes, and the exact 30-day boundary.
+
+### Strengthen identity, privacy and tool boundaries
+
+- Email plus card last four is only a mock verification mechanism, not strong
+  customer authentication. In production, bind the conversation to an
+  authenticated session or use a step-up verification flow such as OTP.
+- Keep credentials and PII out of the model context where feasible. Capture
+  verification fields in a secure UI/service, pass opaque verification state to
+  the model, and avoid placing them in model tool-call arguments.
+- Redact or encrypt customer messages, tool arguments and transcripts. The
+  sample tool results are scrubbed, but raw user messages and transcript logs
+  can still contain email and card-last-four data. Define access controls,
+  retention, deletion and audit requirements before launch.
+- Validate every tool argument server-side with strict schemas and
+  authorisation checks. Maintain ownership checks, reject unknown/malformed
+  identifiers, constrain summaries, and protect tool services against prompt
+  injection, replay and excessive ticket creation.
+- Add a customer-safe frozen-card reason to the API if Support expects the
+  agent to explain it. (I chose not to infer it now)
+
+### Resolve product-policy gaps before launch
+
+- Get written decisions for pending transactions, fraud at or below $500,
+  frozen-card refunds, partial refunds, supported currencies, refund timing and
+  the $75/30-day boundary semantics. Encode those choices in both the policy
+  guard and customer-facing wording.
+- Define what the agent may say or do for customer-not-found, transaction-not-
+  found, verification failure, unsupported requests, and upstream outages.
+- Add an approved escalation summary format that shares the minimum necessary
+  information with Support and gives agents enough context to act.
+
+### Prove reliability continuously
+
+- Expand deterministic tests to cover bypass attempts: legal/fraud/closure
+  language combined with an otherwise eligible refund, frozen-card flows,
+  unauthenticated escalation, partial/zero/negative/non-finite amounts,
+  cross-customer IDs, tool failures and concurrent duplicate refunds.
+- Strengthen eval assertions. A clarifying-question check should validate that
+  the question actually identifies the missing transaction, and required tool
+  calls should include the transaction lookup whenever eligibility depends on
+  transaction data.
+- Run version-pinned, repeatable model evaluations in CI across multiple runs;
+  retain the model/version, prompts and anonymised artifacts. Treat a
+  temperature of zero as a configuration, not a guarantee of determinism.
+- Add pre-launch monitoring: policy-block and escalation metrics, refund/ticket
+  error rates, sampled quality review, red-team prompt-injection testing,
+  alerts, a kill switch and a rollback plan. Launch with limited traffic and
+  human review until those controls are proven.

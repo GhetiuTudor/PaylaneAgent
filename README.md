@@ -152,3 +152,30 @@ financial or privacy incident (even when the model made mistakes the money moves
 - Move escalation to a durable, retryable service with idempotency and customer-safe outage handling.
 - Keep PII out of model context and logs where possible; implement retention, access control, and audit requirements.
 - Confirm the open policy questions, then add monitoring, red-team evaluation, rate limits, concurrency tests, and a controlled rollout plan.
+
+## How answers to my questions would change the design
+
+- **Frozen card refunds:** I currently escalate any verified frozen-card case and
+  do not refund it. If Support allows an otherwise eligible refund on a frozen
+  card, I would remove that refund block while retaining escalation for unfreeze
+  requests, then add a frozen-but-eligible refund evaluation.
+
+- **Pending transactions:** I currently escalate pending transactions. If they
+  may be refunded, I would allow `pending` in the eligibility guard, remove its
+  human-review trigger, and add a pending auto-refund case. The mock can model
+  that outcome, but production requires confirmation that the payment provider
+  can safely refund a pending transaction.
+
+- **Fraud at $500 or less:** I currently escalate every suspected fraud report.
+  If smaller fraud claims should follow the normal refund policy, I would verify
+  the customer, inspect the authoritative transaction amount, escalate only
+  above $500, and add $500 / $500.01 boundary cases.
+
+- **Verification contract:** I currently treat matching email and card-last-four
+  values as verification for the chat session. If that is not the intended
+  contract, the supplied tools cannot safely support auto-refunds; Paylane would
+  need a verification endpoint or every refund would need human review.
+
+- **Frozen-card reason:** I currently do not invent a reason because the mock
+  returns only `status: frozen`. If Paylane supplies an approved `freeze_reason`,
+  I would reveal it only after verification and keep the unfreeze escalation.

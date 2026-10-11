@@ -69,10 +69,23 @@ PaylaneAgent/
 The brief leaves several product decisions open. The agent chooses the safer path and records the question for the Head of Support in [`customer_mail.txt`](customer_mail.txt):
 
 - Pending transactions are escalated rather than refunded.
-- All suspected fraud is escalated; a customer message is not an authoritative fraud-amount source.
+- **Temporary conservative fraud route:** all suspected fraud is escalated because a customer message is not an authoritative fraud-amount source. This is stricter than the brief's over-$500 rule and must be confirmed or changed with Paylane's Head of Support before launch.
 - Frozen cards always go to a human, and the agent does not invent a freeze reason absent from the API.
 - Exactly $75 is eligible; a transaction exactly 30 days old is not.
 - Verification retry limits and any rolling per-customer refund cap are requested policy decisions, not silently invented thresholds.
+
+### Known API-spec blocker: explaining a frozen card
+
+The brief says the agent may explain why a card is frozen. The supplied
+`get_customer` response provides only `status: frozen`; it contains no
+customer-safe freeze reason. The agent therefore confirms the card is frozen,
+does not invent a reason, and escalates the case rather than making an
+unsupported explanation.
+
+Before launch, this needs agreement with Paylane's Head of Support: either add
+an approved customer-safe `freeze_reason` to the API, or define approved
+generic wording and confirm that it satisfies the support policy. Until then,
+the frozen-card explanation capability is intentionally unavailable.
 
 ### Known prototype limitation: one active case per chat
 
@@ -82,7 +95,7 @@ still explain the handoff in a tool-free mode, but it cannot reopen the refund
 or start another automated request. This is deliberate: real-model testing
 found that a model could promise a human follow-up without creating a ticket,
 and a normal tool-enabled conversation could later retry the declined refund
-under customer pushback.
+under customer pushback, which could cause more problems than it solves. 
 
 The trade-off is that an unrelated eligible request—for example, refunding T100
 after T101 was escalated—must start in a new chat. Before production, I would

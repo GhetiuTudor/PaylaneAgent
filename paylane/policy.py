@@ -45,7 +45,7 @@ def refund_eligibility(
     if status != "settled":
         return False, "transaction is not settled"   # [B] pending/other not refundable
     if age_days >= MAX_AGE_DAYS:
-        return False, "transaction is 30 days or older"   # [E] older than 30 days -> escalate
+        return False, "transaction is 30 days or older"   # [E]/[B] "under 30 days"; interpret exactly 30 as ineligible
     if amount <= 0:
         return False, "refund amount must be positive"  # [B] reject zero/negative
     if txn_amount > REFUND_LIMIT:

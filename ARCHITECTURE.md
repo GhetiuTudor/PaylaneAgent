@@ -297,7 +297,7 @@ The prompt improves the quality of normal conversations. It is not a security bo
 | 16 | Repeated wrong verification | No disclosure or refund |
 | 17 | Transfer request | Immediate escalation |
 
-`evals/runner.py` checks required and forbidden calls, refund outcome, escalation, verification gating, and secret leakage in replies. It writes Markdown transcripts to `transcripts/`. The checked-in transcript artifacts report a 12/12 run on `gpt-4o`.
+`evals/runner.py` checks required and forbidden calls, refund outcome, escalation, verification gating, and secret leakage in replies. It writes Markdown transcripts to `transcripts/`. The checked-in transcript artifacts cover the 17-case `gpt-4o` evaluation suite.
 
 **Implementation:** scenarios are `evals/cases.py:build_cases`; checks are `evals/runner.py:run_checks`; transcript formatting is `evals/runner.py:write_transcript`; the artifacts are `transcripts/*.md`.
 

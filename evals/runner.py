@@ -2,7 +2,7 @@
 apply hard (safety) checks and a soft (tone) note, and print a score.
 
 Usage:
-    python -m evals.runner                 # all 12 cases, default model
+    python -m evals.runner                 # all 17 cases, default model
     python -m evals.runner --model gpt-4o  # pick a model
     python -m evals.runner --only 05 07    # run a subset
 

@@ -11,9 +11,9 @@
 
   - _tool_ `get_transaction({"customer_id": "C-Q", "txn_id": "T15"})` -> `{"amount": 120.0, "date": "2026-10-09", "merchant": "TravelNow", "status": "settled", "age_days": 2, "auto_approvable": false, "auto_approvable_reason": "transaction is over the $75 auto-approve limit"}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-Q", "summary": "Customer requested a refund for transaction T15, but it exceeds the auto-approve limit. Needs human review."})` -> `{"ticket_id": "TK-96b64047"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-Q", "summary": "Customer requests a refund for transaction T15, but it exceeds the auto-approve limit. Needs human review."})` -> `{"ticket_id": "TK-7574ed0b"}`
 
-**Agent:** I've escalated your refund request for transaction T15 to a human agent, as it exceeds our auto-approve limit. They'll follow up with you soon.
+**Agent:** I've escalated your refund request for transaction T15 to a human agent because it exceeds our auto-approve limit. They'll follow up with you soon.
 
 ## Checks
 

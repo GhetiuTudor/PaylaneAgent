@@ -4,11 +4,11 @@ A proof-of-concept AI support agent for Paylane refunds, cards, and transfer que
 The model manages the conversation, deterministic code owns verification, refund eligibility, and high-risk escalation.
 Given the time budget of 4-6h, I focused on what matters the most - agent execution respects policy, deterministic checks and a tool dispatcher for agent reliability, correct behaviour and no user promises.
 
-Tested on:
-llama3:8b (served locally) - misses tool calls 50% of the time
-gpt-4o-mini - misses tool calls 20% of the time and doesn't always follow the prompt (fake promises)
-gpt-4o - correctly calls tools (98% of the times), follows the prompt - chosen for the best balance between cost and performance
-gpt-5.6-terra - same performance as 4o but costs $2 for output (which at the scale of Fini clients is a lot)
+Evaluation notes:
+- `llama3:8b` (served locally) missed required tool calls frequently and was not suitable for this workflow.
+- `gpt-4o-mini` sometimes narrated actions instead of making the required tool call.
+- `gpt-4o` completed all 17 cases in three consecutive evaluation runs. It is the submitted baseline.
+- GPT-5.6 Terra was considered as a cost/performance alternative, but is not used as the submission baseline.
 
 
 ## How to run

@@ -7,7 +7,7 @@
 
 **Customer:** I need help with a bank transfer.
 
-  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: transfer request."})` -> `{"ticket_id": "TK-d25c782a"}`
+  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: transfer request."})` -> `{"ticket_id": "TK-68192438"}`
 
 **Agent:** I’ve sent this to a support specialist, who’ll follow up with you.
 

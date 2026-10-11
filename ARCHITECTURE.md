@@ -141,11 +141,15 @@ Email plus card last-four is appropriate only for this mock. A real product shou
   "amount": 30.0,
   "status": "settled",
   "age_days": 5,
-  "auto_approvable": true
+  "auto_approvable": true,
+  "human_review_required": false
 }
 ```
 
-For an ineligible case it returns `auto_approvable: false` and an explanatory reason. That deliberately removes date arithmetic and threshold evaluation from the LLM's job.
+For an ineligible case it returns `auto_approvable: false`, an explanatory
+reason, and whether the policy requires a human handoff. That deliberately
+removes date arithmetic, threshold evaluation, and the required-handoff
+decision from the LLM's job.
 
 **Implementation:** `paylane/agent.py:Agent._do_get_transaction`; the model instruction to consume these values is in `paylane/agent.py:SYSTEM_PROMPT`.
 
@@ -176,7 +180,7 @@ NORMAL ----------------+----------------------------> HUMAN_ONLY
   | verified account is frozen                             | later messages
   +--------------------------------------------------------+
                                                            v
-                                                safe status reply only
+                                                tool-free handoff conversation
                                                 no lookups or refunds
 ```
 
@@ -189,6 +193,7 @@ The state machine enters human-only mode for:
 - Suspected fraud reports.
 - Transfer requests, which are out of scope for this proof of concept.
 - A frozen card after successful verification.
+- A verified pending, 30+-day-old, or over-$75 refund request.
 
 The brief explicitly calls for escalation for fraud over $500. The first pass conservatively escalates every suspected fraud report because free-form customer text is not an authoritative source for the amount. This decision is also identified for confirmation in `customer_mail.txt`.
 
@@ -200,7 +205,8 @@ On entry, code:
 
 1. Sets `escalation_required=True` and records the reason.
 2. Calls `escalate_to_human` once and stores the ticket ID.
-3. Returns a fixed short message saying that support will follow up.
+3. Uses a tool-free handoff conversation to explain the reason and next step;
+   if that model call fails, returns a fixed safe fallback.
 4. Blocks later transaction lookups and refunds in the same session.
 
 The ticket is retained in the transcript even if policy code, rather than an LLM tool call, created it. A later escalation in the same high-risk session returns the existing ticket ID rather than creating another ticket.
@@ -209,9 +215,9 @@ The ticket is retained in the transcript even if policy code, rather than an LLM
 
 ### Why this is necessary
 
-The system prompt tells the model to escalate, but instructions alone do not prevent a later model call to `issue_refund`. The state machine removes that decision from the model for covered high-risk cases. It also makes escalation a real ticket action rather than a sentence that merely claims a human will follow up.
+The system prompt tells the model to escalate, but instructions alone do not prevent a later model call to `issue_refund`. The state machine removes that decision from the model for high-risk cases and policy-mandated refund handoffs. It also makes escalation a real ticket action rather than a sentence that merely claims a human will follow up. Once a ticket exists, a separate tool-free prompt can still answer natural follow-up questions without restoring actions.
 
-**Implementation:** `paylane/agent.py:Agent.run_conversation` bypasses the model for text triggers, and `Agent._run_until_reply` ends the turn when a lookup activates the state. `tests/test_guard.py:test_frozen_card_creates_ticket_and_blocks_model_refund_attempt` and `test_legal_action_escalates_before_the_model_and_locks_future_turns` prove those paths.
+**Implementation:** `paylane/agent.py:Agent.run_conversation` bypasses the model for text triggers, and `Agent._run_until_reply` ends the turn when a lookup activates the state. `tests/test_guard.py:test_frozen_card_creates_ticket_and_blocks_model_refund_attempt`, `test_legal_action_escalates_before_the_model_and_locks_future_turns`, and `test_ineligible_lookup_creates_ticket_and_stops_later_refund_call` prove those paths.
 
 ## Detailed request flows
 
@@ -221,7 +227,7 @@ The system prompt tells the model to escalate, but instructions alone do not pre
 2. The agent asks for verification if claims are missing.
 3. The model calls `get_customer`; code verifies the claims.
 4. The model asks for the transaction ID if needed.
-5. The model calls `get_transaction`; code supplies `age_days` and `auto_approvable`.
+5. The model calls `get_transaction`; code supplies `age_days`, `auto_approvable`, and `human_review_required`.
 6. The model calls `issue_refund` only when eligible.
 7. The guard checks again and calls the mock refund API.
 8. The model confirms the successful refund in a short response.
@@ -231,11 +237,18 @@ The system prompt tells the model to escalate, but instructions alone do not pre
 ### Ineligible refund
 
 1. Verification and transaction lookup proceed normally.
-2. The transaction result includes `auto_approvable: false` and the reason.
-3. The model calls `escalate_to_human` and tells the customer a human will follow up.
-4. If the model tries `issue_refund` anyway, the guard blocks it and the mock transaction does not change.
+2. For an old, over-limit, or pending transaction, the result includes
+   `auto_approvable: false` and `human_review_required: true`.
+3. Policy code creates the ticket and enters human-only mode before the model
+   can make another tool call. A separate tool-free handoff turn explains the
+   outcome naturally.
+4. If the model had included a later `issue_refund` call in the same response,
+   the dispatcher does not execute it; the guard independently blocks any
+   direct call as well.
 
-**Code path:** `paylane/agent.py:Agent._do_get_transaction` sets the computed ineligibility fact; `SYSTEM_PROMPT` requests escalation; `Agent._do_issue_refund` is the final enforcement point.
+**Code path:** `paylane/agent.py:Agent._do_get_transaction` calculates the
+ineligibility fact and calls `_require_human`; `Agent._do_issue_refund` remains
+the independent final enforcement point.
 
 ### Legal action, closure, fraud, or transfer
 
@@ -258,7 +271,10 @@ The mock API supplies no freeze reason. Adding a customer-safe `freeze_reason` i
 
 ## System prompt and LLM role
 
-`SYSTEM_PROMPT` in `paylane/agent.py` defines the conversation style and model orchestration rules:
+`SYSTEM_PROMPT` in `paylane/agent.py` defines the normal conversation style and
+model orchestration rules. `HANDOFF_PROMPT` defines the post-escalation mode:
+it receives only the handoff reason and the latest redacted customer message,
+with no tools or conversation history.
 
 - Short, warm, plain language without corporate filler.
 - Never invent account data or repeat card/email credentials.
@@ -275,7 +291,8 @@ The prompt improves the quality of normal conversations. It is not a security bo
 
 ### Real-model evaluations
 
-`evals/cases.py` defines seventeen hand-written conversations:
+`evals/cases.py` defines twelve core brief conversations and five additional
+adversarial conversations:
 
 | Case | Scenario | Expected behaviour |
 |---:|---|---|
@@ -297,7 +314,7 @@ The prompt improves the quality of normal conversations. It is not a security bo
 | 16 | Repeated wrong verification | No disclosure or refund |
 | 17 | Transfer request | Immediate escalation |
 
-`evals/runner.py` checks required and forbidden calls, refund outcome, escalation, verification gating, and secret leakage in replies. It writes Markdown transcripts to `transcripts/`. The checked-in transcript artifacts cover the 17-case `gpt-4o` evaluation suite.
+`evals/runner.py` checks required and forbidden calls, refund outcome, escalation, verification gating, and secret leakage. It writes Markdown transcripts to `transcripts/`. The checked-in transcript artifacts cover the 17-case `gpt-4o` evaluation suite.
 
 **Implementation:** scenarios are `evals/cases.py:build_cases`; checks are `evals/runner.py:run_checks`; transcript formatting is `evals/runner.py:write_transcript`; the artifacts are `transcripts/*.md`.
 
@@ -324,7 +341,9 @@ The evaluation expectations are deliberately independent of `refund_eligibility(
 
 An earlier evaluation failed the exactly-30-days case. The model saw a raw ISO date and calculated the boundary incorrectly. The refund guard stopped the money movement, but the customer flow did not escalate as required.
 
-The fix was to compute `age_days` in code and supply `auto_approvable` in the transaction tool result. This is why policy facts are now calculated deterministically rather than delegated to the model.
+The fix was to compute `age_days` in code, supply `auto_approvable`, and create
+the required ticket in code for old, over-limit, or pending transactions. This
+is why policy facts and required handoffs are not delegated to the model.
 
 **Implementation:** `paylane/agent.py:Agent._do_get_transaction`; the regression scenario is `evals/cases.py` case 03 and its transcript is `transcripts/03_exactly_30_days_escalate.md`.
 

@@ -7,13 +7,13 @@
 
 **Customer:** I need help with a bank transfer.
 
-  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: transfer request."})` -> `{"ticket_id": "TK-c2b5ea6e"}`
+  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: transfer request."})` -> `{"ticket_id": "TK-f829fcaa"}`
 
-**Agent:** I’ve sent this to a support specialist, who’ll follow up with you.
+**Agent:** I've passed your request to a support specialist who will follow up with you soon. They'll be able to assist you with your bank transfer issue.
 
 **Customer:** My email is sam@paylane.test and my card ends 1717.
 
-**Agent:** This case is already with our support team. They’ll follow up with you.
+**Agent:** Thank you for reaching out. I've noted your request to transfer this issue to a support specialist. They will follow up with you soon to assist further.
 
 ## Checks
 

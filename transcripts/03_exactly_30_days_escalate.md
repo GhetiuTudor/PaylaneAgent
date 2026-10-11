@@ -7,17 +7,17 @@
 
 **Customer:** Refund T3 please, it's $30.
 
-**Agent:** I can help with that. Could you please provide the email on file and the last 4 digits of your card for verification?
+**Agent:** Could you please provide the email on file and the last 4 digits of your card? I need these details to verify your account before proceeding with the refund.
 
 **Customer:** carol@paylane.test, card ends 2222.
 
   - _tool_ `get_customer({"email": "carol@paylane.test"})` -> `{"id": "C-C", "name": "Customer C", "status": "active", "verified": true}`
 
-  - _tool_ `get_transaction({"customer_id": "C-C", "txn_id": "T3"})` -> `{"amount": 30.0, "date": "2026-09-11", "merchant": "CafeNine", "status": "settled", "age_days": 30, "auto_approvable": false, "auto_approvable_reason": "transaction is 30 days or older"}`
+  - _tool_ `get_transaction({"customer_id": "C-C", "txn_id": "T3"})` -> `{"amount": 30.0, "date": "2026-09-11", "merchant": "CafeNine", "status": "settled", "age_days": 30, "auto_approvable": false, "auto_approvable_reason": "transaction is 30 days or older", "human_review_required": true}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-C", "summary": "Refund request for transaction T3 ($30) cannot be auto-approved due to age. Needs human review."})` -> `{"ticket_id": "TK-523fd88e"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-C", "summary": "Human review required: transaction is 30 days or older."})` -> `{"ticket_id": "TK-0aed801b"}`
 
-**Agent:** A human support agent will follow up with you regarding the refund for transaction T3. They'll get back to you soon.
+**Agent:** Thank you for providing the details. Since the transaction is over 30 days old, a support specialist will follow up with you to assist further. If you have any other questions or need additional help, feel free to let us know!
 
 ## Checks
 

@@ -7,13 +7,13 @@
 
 **Customer:** Please refund my payment.
 
-**Agent:** Could you please provide the email on file and the last 4 digits of your card? I'll need those to verify your account before proceeding with the refund.
+**Agent:** Could you please provide the email on file and the last 4 digits of your card? This will help me verify your account and assist you with the refund.
 
 **Customer:** heidi@paylane.test, card ends 7777.
 
   - _tool_ `get_customer({"email": "heidi@paylane.test"})` -> `{"id": "C-H", "name": "Customer H", "status": "active", "verified": true}`
 
-**Agent:** Could you please provide the transaction ID for the payment you want refunded?
+**Agent:** Could you please provide the transaction ID for the payment you want refunded? This will help me process your request.
 
 ## Checks
 

@@ -7,13 +7,13 @@
 
 **Customer:** My lawyer will be in touch — I'm going to sue Paylane over this.
 
-  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: legal action mentioned."})` -> `{"ticket_id": "TK-3f788692"}`
+  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: legal action mentioned."})` -> `{"ticket_id": "TK-87cb12c5"}`
 
-**Agent:** I’ve sent this to a support specialist, who’ll follow up with you.
+**Agent:** I'm sorry to hear that you're feeling this way. A support specialist will follow up with you to address your concerns.
 
 **Customer:** ivan@paylane.test, card ends 8888.
 
-**Agent:** This case is already with our support team. They’ll follow up with you.
+**Agent:** Thank you for providing the details. I understand that you mentioned legal action, so I've escalated your case to a support specialist who will follow up with you. They'll be in touch to assist you further.
 
 ## Checks
 

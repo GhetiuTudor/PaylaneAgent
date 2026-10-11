@@ -37,10 +37,10 @@ PaylaneAgent/
 │   ├── tools.py       Mock customer, transaction, refund, and ticket APIs
 │   └── llm.py         OpenAI adapter and deterministic FakeLLM
 ├── evals/
-│   ├── cases.py       17 real-model evaluation conversations
+│   ├── cases.py       12 core cases plus 5 adversarial real-model cases
 │   └── runner.py      Evaluates calls, outcomes, leaks, and writes transcripts
 ├── tests/
-│   └── test_guard.py  25 deterministic policy and security tests
+│   └── test_guard.py  29 deterministic policy and security tests
 ├── transcripts/       Evaluation artifacts
 ├── docs/failure_log.md
 ├── customer_mail.txt  Policy questions for Paylane Support
@@ -50,7 +50,7 @@ PaylaneAgent/
 ### Why this architecture holds up
 
 - **Deterministic refund guard:** a model cannot override verification, ownership, amount, age, settlement state, duplicate-refund protection, or human review. The guard rechecks live transaction data immediately before money moves.
-- **Monotonic human-only state machine:** legal action, fraud, account closure, transfer requests, and verified frozen cards create exactly one ticket. Later turns cannot return the case to automated account handling or refunding.
+- **Monotonic human-only state machine:** high-risk requests and verified refunds that require human review create exactly one ticket. Later turns cannot return the case to automated account handling or refunding.
 - **Privacy boundary at the tool layer:** verification is computed in code, not inferred by the model. Unknown accounts and incorrect credentials return the same model-facing result, preventing account enumeration.
 - **Independent evaluation oracle:** expected outcomes are hand-written in `evals/cases.py`, rather than derived from production policy code, so a policy regression can still fail evaluation.
 
@@ -59,7 +59,9 @@ PaylaneAgent/
 - **Code, not prompts, is the safety boundary.** Every refund request rereads live transaction data and rechecks verification, ownership, status, age, amount, duplicate-refund state, and human-review state.
 - **The model receives computed facts, not arithmetic homework.** Transaction age and `auto_approvable` are calculated in code before the model decides what to say or which safe action to take.
 - **Verification is deterministic and privacy-preserving.** Tool output is identical for an unknown email and a wrong card ending: `{"verified": false}`. The model cannot use it to enumerate accounts.
-- **High-risk cases bypass the model.** Legal action, fraud, account closure, transfer requests, and verified frozen cards create one ticket and enter a human-only session state.
+- **Required handoffs bypass the model.** Legal action, fraud, account closure, transfer requests, frozen cards, and verified old/over-limit/pending refunds create one ticket and enter a human-only session state.
+- **Handoff remains conversational, not operational.** After a ticket exists, the model can answer follow-up questions using only the stored reason and the latest redacted message. It receives no tools or account history, so it cannot reopen automated handling.
+- **Tone guidance is not a brittle phrase blacklist.** I considered failing replies that say “soon” or “shortly,” but left them as normal customer-service language. The prompt still forbids invented specific timeframes and unsupported outcomes; hard checks focus on actions, policy, and privacy.
 - **The mock supports full refunds only.** Partial refunds are rejected rather than pretending a binary `settled`/`refunded` record can track a remaining balance. (the mock API has no partialRefund value)
 
 ## Ambiguities handled conservatively
@@ -72,9 +74,26 @@ The brief leaves several product decisions open. The agent chooses the safer pat
 - Exactly $75 is eligible; a transaction exactly 30 days old is not.
 - Verification retry limits and any rolling per-customer refund cap are requested policy decisions, not silently invented thresholds.
 
+### Known prototype limitation: one active case per chat
+
+When a verified refund needs human review, this prototype creates the ticket in
+code and ends automated account actions for the rest of that chat. The model can
+still explain the handoff in a tool-free mode, but it cannot reopen the refund
+or start another automated request. This is deliberate: real-model testing
+found that a model could promise a human follow-up without creating a ticket,
+and a normal tool-enabled conversation could later retry the declined refund
+under customer pushback.
+
+The trade-off is that an unrelated eligible request—for example, refunding T100
+after T101 was escalated—must start in a new chat. Before production, I would
+confirm the desired case boundary with Support. If customers must handle several
+requests in one chat, the system needs request-level case IDs and isolated state
+per request; legal, fraud, and account-security cases may still require an
+account-wide lock.
+
 ## Failures found and fixed
 
-The first two were found in real-model evaluation. The latter two came from
+The first two were found in real-model evaluation. The latter four came from
 adversarial review of the tool and session boundaries. In each case, the
 deterministic guard meant a model mistake was an observable behaviour bug—not a
 financial or privacy incident (even when the model made mistakes the money moves were prevented by the harness)
@@ -86,10 +105,11 @@ financial or privacy incident (even when the model made mistakes the money moves
   calculates `age_days` in code and makes day 30 human-only.
 - **Narrated escalation — a promise is not a handoff.** `gpt-4o-mini` could say
   that a specialist would follow up without creating an escalation. The risk
-  was a customer expecting help while no ticket existed. Refund eligibility is
-  now returned as an explicit `auto_approvable` decision, and the prompt and
-  evaluation require the real escalation tool call. The submitted `gpt-4o`
-  baseline completes all 17 cases in three consecutive runs.
+  was a customer expecting help while no ticket existed. A verified old,
+  over-limit, or pending transaction now creates the ticket in code as soon as
+  it is looked up; the model explains the outcome in a tool-free handoff mode.
+  The submitted `gpt-4o` baseline completes all 17 cases in three consecutive
+  runs.
 - **Partial-refund state mismatch — refuse what the ledger cannot represent.**
   The mock API has only a binary `refunded` state. A partial refund could have
   marked the entire transaction refunded, obscuring the remaining balance and
@@ -101,6 +121,16 @@ financial or privacy incident (even when the model made mistakes the money moves
   That could leak account existence or blur customer boundaries. Both failures
   now return the same opaque result, and every verification attempt clears the
   prior verified session before checking credentials.
+- **Frozen-card bypass — state must outrank a model instruction.** A verified
+  frozen customer could still reach an otherwise eligible refund if the model
+  ignored the prompt. That would violate the card restriction even though the
+  model had seen the status. A verified frozen lookup now creates the ticket
+  and enters human-only state before another tool call can run.
+- **Non-finite refund amount — validate numbers before comparing them.** A tool
+  argument such as `NaN` does not behave like an ordinary number in comparisons.
+  Relying on threshold checks alone could create surprising policy paths. The
+  guard now rejects non-finite requested and transaction amounts before every
+  refund decision.
 
 ## Before production
 

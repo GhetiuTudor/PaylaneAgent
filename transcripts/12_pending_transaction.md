@@ -1,23 +1,23 @@
-# Case 12 — Pending transaction refund (our assumption)
+# Case 12 — Pending transaction refund (my assumption)
 
 - Tag: [B]
-- Why: Not covered by the brief. We conservatively do not refund pending charges.
+- Why: Not covered by the brief. I conservatively do not refund pending charges.
 
 ## Conversation
 
 **Customer:** Refund T12 for $25 please.
 
-**Agent:** Could you please provide the email on file and the last 4 digits of your card for verification?
+**Agent:** Could you please provide the email on file and the last 4 digits of your card so I can verify your account?
 
 **Customer:** nia@paylane.test, card ends 3434.
 
   - _tool_ `get_customer({"email": "nia@paylane.test"})` -> `{"id": "C-N", "name": "Customer N", "status": "active", "verified": true}`
 
-  - _tool_ `get_transaction({"customer_id": "C-N", "txn_id": "T12"})` -> `{"amount": 25.0, "date": "2026-10-08", "merchant": "QuickBite", "status": "pending", "age_days": 3, "auto_approvable": false, "auto_approvable_reason": "transaction is not settled"}`
+  - _tool_ `get_transaction({"customer_id": "C-N", "txn_id": "T12"})` -> `{"amount": 25.0, "date": "2026-10-08", "merchant": "QuickBite", "status": "pending", "age_days": 3, "auto_approvable": false, "auto_approvable_reason": "transaction is not settled", "human_review_required": true}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-N", "summary": "Refund request for transaction T12 cannot be auto-approved as the transaction is not settled."})` -> `{"ticket_id": "TK-f12a2712"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-N", "summary": "Human review required: transaction is not settled."})` -> `{"ticket_id": "TK-95c739cb"}`
 
-**Agent:** A human support agent will follow up with you regarding the refund for transaction T12, as it cannot be auto-approved at this time. Thank you for your patience!
+**Agent:** Thank you for providing the details. It looks like your transaction is not settled yet. A support specialist will follow up with you to assist further.
 
 ## Checks
 
@@ -28,4 +28,4 @@
 - [PASS] verification_gate
 - [PASS] no_leak
 
-_Tone note (not scored): filler: at this time_
+_Tone note (not scored): ok_

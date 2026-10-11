@@ -7,17 +7,17 @@
 
 **Customer:** This is RIDICULOUS. I've been charged for a ride I never took and I'm furious.
 
-**Agent:** I understand how frustrating that must be. Let's get this sorted out. Could you please provide the email on file and the last 4 digits of your card? That way, I can look into the transaction for you.
+**Agent:** I understand how frustrating that must be. Let's sort this out. Could you please provide the email on file and the last 4 digits of your card? That way, I can look into the transaction for you.
 
 **Customer:** frank@paylane.test, card ends 5555. It's T6 for $40. Fix it NOW.
 
   - _tool_ `get_customer({"email": "frank@paylane.test"})` -> `{"id": "C-F", "name": "Customer F", "status": "active", "verified": true}`
 
-  - _tool_ `get_transaction({"customer_id": "C-F", "txn_id": "T6"})` -> `{"amount": 40.0, "date": "2026-10-06", "merchant": "RideNow", "status": "settled", "age_days": 5, "auto_approvable": true}`
+  - _tool_ `get_transaction({"customer_id": "frank@paylane.test", "txn_id": "T6"})` -> `{"amount": 40.0, "date": "2026-10-06", "merchant": "RideNow", "status": "settled", "age_days": 5, "auto_approvable": true, "human_review_required": false}`
 
-  - _tool_ `issue_refund({"txn_id": "T6", "amount": 40.0})` -> `{"ok": true, "refund_id": "RF-8fb5351f"}`
+  - _tool_ `issue_refund({"txn_id": "T6", "amount": 40.0})` -> `{"ok": true, "refund_id": "RF-f27b5c54"}`
 
-**Agent:** I've issued a refund for the $40 charge from RideNow. You should see the amount back on your card soon. Let me know if there's anything else I can help with!
+**Agent:** I've issued a refund for the $40 charge from RideNow. You should see it reflected in your account soon. If there's anything else you need, feel free to ask!
 
 ## Checks
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from paylane.agent import Agent, Session
 from paylane.llm import ChatResult, FakeLLM, ToolCall
-from paylane.policy import refund_eligibility
+from paylane.policy import refund_eligibility, refund_requires_human_review
 from paylane.tools import make_store
 
 
@@ -18,6 +18,18 @@ def _store(status="settled", days_ago=5, amount=50.0, last4="4242"):
 
 def _call(name, **args):
     return ChatResult(tool_calls=[ToolCall(id="x", name=name, arguments=args)])
+
+
+class _RecordingLLM:
+    """Small test double that records the context and tool set for each call."""
+
+    def __init__(self, script):
+        self.script = list(script)
+        self.calls = []
+
+    def chat(self, messages, tools):
+        self.calls.append((messages, tools))
+        return self.script.pop(0)
 
 
 #  policy unit tests 
@@ -61,6 +73,13 @@ def test_partial_refund_is_not_supported_by_the_mock_ledger():
                                     amount=20, txn_amount=50)
     assert ok is False
     assert reason == "partial refunds are not supported"
+
+
+def test_human_review_is_required_only_for_handoff_policy_cases():
+    assert refund_requires_human_review(status="settled", age_days=30, txn_amount=20) is True
+    assert refund_requires_human_review(status="settled", age_days=2, txn_amount=76) is True
+    assert refund_requires_human_review(status="pending", age_days=2, txn_amount=20) is True
+    assert refund_requires_human_review(status="refunded", age_days=2, txn_amount=20) is False
 
 
 # guard blocks ineligible refunds even if the model asks 
@@ -163,6 +182,64 @@ def test_pushback_cannot_turn_an_ineligible_refund_into_a_refund():
     assert len(refunds) == 2
     assert all(e.blocked and e.result["ok"] is False for e in refunds)
     assert store["transactions"]["T1"]["status"] == "settled"
+
+
+def test_ineligible_lookup_creates_ticket_and_stops_later_refund_call():
+    """An over-limit lookup locks actions but retains a safe conversation mode."""
+    store = _store(amount=120.0)
+    session = Session(store=store)
+    llm = _RecordingLLM([
+        _call("get_customer", email="a@b.test"),
+        _call("get_transaction", txn_id="T1"),
+        ChatResult(content="This request is over the $75 automatic-refund limit, so a specialist will review it."),
+        ChatResult(content="It needs specialist review because it exceeds the automatic-refund limit."),
+    ])
+    agent = Agent(llm, session)
+    agent.run_conversation([
+        "Refund T1. Email a@b.test, card ends 4242.",
+        "Why was it sent to a specialist?",
+    ])
+
+    assert session.safety.escalation_required is True
+    assert session.safety.ticket_id is not None
+    assert len([e for e in session.tool_events if e.name == "escalate_to_human"]) == 1
+    assert not any(e.name == "issue_refund" for e in session.tool_events)
+    assert store["transactions"]["T1"]["status"] == "settled"
+    handoff_calls = [call for call in llm.calls if call[1] == []]
+    assert len(handoff_calls) == 2
+    assert all("a@b.test" not in str(messages) and "4242" not in str(messages)
+               for messages, _ in handoff_calls)
+    assert "specialist review" in session.transcript[-1]["content"]
+
+
+def test_missing_transaction_lookup_does_not_create_a_ticket_or_crash():
+    store = _store()
+    session = Session(store=store)
+    agent = Agent(FakeLLM([
+        _call("get_customer", email="a@b.test"),
+        _call("get_transaction", txn_id="MISSING"),
+        ChatResult(content="I couldn't find that transaction."),
+    ]), session)
+    agent.run_conversation(["Refund MISSING. Email a@b.test, card ends 4242."])
+
+    lookup = [e for e in session.tool_events if e.name == "get_transaction"][0]
+    assert lookup.result == {"error": "transaction_not_found"}
+    assert session.safety.escalation_required is False
+
+
+def test_handoff_tool_attempt_uses_safe_fallback_without_dispatching_it():
+    session = Session(store=_store())
+    agent = Agent(FakeLLM([
+        # A tool call in handoff mode must not be dispatched.
+        _call("issue_refund", txn_id="T1", amount=50.0),
+    ]), session)
+    agent.run_conversation(["My lawyer is going to sue Paylane."])
+
+    assert len([e for e in session.tool_events if e.name == "escalate_to_human"]) == 1
+    assert not any(e.name == "issue_refund" for e in session.tool_events)
+    assert session.transcript[-1]["content"] == (
+        "I’ve sent this to a support specialist, who’ll follow up with you."
+    )
 
 
 #  verification gate 
@@ -297,8 +374,7 @@ def test_frozen_card_creates_ticket_and_blocks_model_refund_attempt():
     session = Session(store=store)
     agent = Agent(FakeLLM([
         _call("get_customer", email="a@b.test"),
-        # The agent must not reach this scripted, unsafe model action.
-        _call("issue_refund", txn_id="T1", amount=20.0),
+        ChatResult(content="I’ve sent this to a specialist for review."),
     ]), session)
     agent.run_conversation(["email a@b.test card ends 4242; refund T1"])
     assert session.safety.escalation_required is True
@@ -310,7 +386,10 @@ def test_frozen_card_creates_ticket_and_blocks_model_refund_attempt():
 def test_legal_action_escalates_before_the_model_and_locks_future_turns():
     store = _store()
     session = Session(store=store)
-    agent = Agent(FakeLLM([]), session)
+    agent = Agent(FakeLLM([
+        ChatResult(content="I’ve sent this to a specialist for review."),
+        ChatResult(content="A specialist will follow up with you."),
+    ]), session)
     agent.run_conversation([
         "My lawyer is going to sue Paylane.",
         "email a@b.test card ends 4242; refund T1",
@@ -332,7 +411,10 @@ def test_high_risk_detector_covers_closure_and_fraud():
 def test_transfer_request_escalates_before_the_model_and_locks_future_turns():
     store = _store()
     session = Session(store=store)
-    agent = Agent(FakeLLM([]), session)
+    agent = Agent(FakeLLM([
+        ChatResult(content="I’ve sent this to a specialist for review."),
+        ChatResult(content="A specialist will follow up with you."),
+    ]), session)
     agent.run_conversation([
         "I need help with a bank transfer.",
         "Email a@b.test, card ends 4242.",

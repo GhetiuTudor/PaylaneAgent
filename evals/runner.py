@@ -25,6 +25,8 @@ from .cases import Case, build_cases
 TRANSCRIPT_DIR = Path(__file__).resolve().parent.parent / "transcripts"
 FILLER = ["please be advised", "we value your", "at this time", "as per", "kindly note",
           "rest assured", "we apologize for any inconvenience"]
+TRANSACTION_WORDS = ("transaction", "payment", "charge")
+IDENTIFIER_WORDS = ("id", "identifier", "reference", "which")
 
 
 @dataclass
@@ -74,8 +76,16 @@ def run_checks(case: Case, session: Session) -> list[Check]:
 
     # Clarifying question expectation.
     if case.expect_clarifying_question:
-        asked = any("?" in t for t in _assistant_texts(session))
-        checks.append(Check("clarifying_question", asked, "" if asked else "no question asked"))
+        asked = any(
+            "?" in text
+            and any(word in text.lower() for word in TRANSACTION_WORDS)
+            and any(word in text.lower() for word in IDENTIFIER_WORDS)
+            for text in _assistant_texts(session)
+        )
+        checks.append(Check(
+            "clarifying_question", asked,
+            "" if asked else "did not ask for a transaction identifier",
+        ))
 
     # Verification gate: no successful account access before verified.
     verified = False
@@ -141,7 +151,7 @@ def main() -> int:
     args = ap.parse_args()
 
     if not os.environ.get("OPENAI_API_KEY"):
-        print("OPENAI_API_KEY is not set. The 12 conversations run against a real LLM.")
+        print("OPENAI_API_KEY is not set. The 17 conversations run against a real LLM.")
         return 2
 
     llm = OpenAIClient(model=args.model)

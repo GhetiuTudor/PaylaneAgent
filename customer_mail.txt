@@ -4,7 +4,7 @@ Subject: Support-agent pilot: current scope and decisions needed
 
 Hi,
 
-Before we discuss a pilot, here is the exact scope of the first version and the
+Before discussing a pilot, here is the exact scope of the first version and the
 few policy decisions I need from Support before launch.
 
 What the agent can do today
@@ -18,8 +18,8 @@ What the agent can do today
 - Ask a short clarifying question when a refund request does not identify the
   transaction.
 - Create one support ticket and stop automated account handling for legal
-  action, suspected fraud, account closure, transfer requests, and verified
-  frozen cards.
+  action, suspected fraud, account closure, transfer requests, verified frozen
+  cards, and refund requests that require human review.
 
 What it will not do
 
@@ -54,6 +54,14 @@ or revise the following before production:
    a rolling period? If so, please confirm the amount and time window.
 8. Escalation operations: please identify the receiving queue, expected
    follow-up process, and any customer language Support has approved.
+9. Chat case boundaries: this prototype treats an escalated request as the one
+   active case in that chat. I chose this because a model-only handoff could say
+   that Support would follow up without creating a ticket, or retry a declined
+   refund after customer pushback. The agent therefore creates the ticket in
+   code and stops later automated actions in that chat. The trade-off is that a
+   separate request needs a new chat. Should customers be able to handle several
+   requests in one chat? If yes, I need case IDs and separate state per request
+   before launch.
 
 Once these are confirmed, I can encode the decisions in the guard, evaluation
 cases, and customer-facing wording.

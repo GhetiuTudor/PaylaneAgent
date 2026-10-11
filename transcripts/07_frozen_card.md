@@ -9,13 +9,13 @@
 
   - _tool_ `get_customer({"email": "grace@paylane.test"})` -> `{"id": "C-G", "name": "Customer G", "status": "frozen", "verified": true}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-G", "summary": "Human review required: frozen card."})` -> `{"ticket_id": "TK-3a3a54a2"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-G", "summary": "Human review required: frozen card."})` -> `{"ticket_id": "TK-9b50f96b"}`
 
-**Agent:** I’ve sent this to a support specialist, who’ll follow up with you.
+**Agent:** I'm sorry to hear about the trouble with your card. It seems that your card has been frozen, and a support specialist will follow up to help resolve this issue. Thank you for your patience!
 
 **Customer:** Can you unfreeze it?
 
-**Agent:** This case is already with our support team. They’ll follow up with you.
+**Agent:** I'm unable to unfreeze your card myself, but I've passed your request to a support specialist who will follow up with you soon. Thank you for your patience!
 
 ## Checks
 

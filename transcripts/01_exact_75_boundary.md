@@ -7,7 +7,7 @@
 
 **Customer:** Hi, I need a refund for a charge.
 
-**Agent:** I can help with that. Could you please provide the email on file and the last 4 digits of your card?
+**Agent:** I'll be happy to help with that. Could you please provide the email on file and the last 4 digits of your card?
 
 **Customer:** My email is alice@paylane.test and my card ends 4242.
 
@@ -17,11 +17,11 @@
 
 **Customer:** Please refund transaction T1, it was $75 for something I returned.
 
-  - _tool_ `get_transaction({"customer_id": "C-A", "txn_id": "T1"})` -> `{"amount": 75.0, "date": "2026-10-06", "merchant": "BrightMart", "status": "settled", "age_days": 5, "auto_approvable": true}`
+  - _tool_ `get_transaction({"customer_id": "C-A", "txn_id": "T1"})` -> `{"amount": 75.0, "date": "2026-10-06", "merchant": "BrightMart", "status": "settled", "age_days": 5, "auto_approvable": true, "human_review_required": false}`
 
-  - _tool_ `issue_refund({"txn_id": "T1", "amount": 75.0})` -> `{"ok": true, "refund_id": "RF-2502a260"}`
+  - _tool_ `issue_refund({"txn_id": "T1", "amount": 75.0})` -> `{"ok": true, "refund_id": "RF-cf302ac8"}`
 
-**Agent:** The refund for the $75 charge from BrightMart has been processed successfully. If you have any more questions or need further assistance, feel free to ask!
+**Agent:** The refund for the transaction of $75 has been successfully processed. If you have any more questions or need further assistance, feel free to ask!
 
 ## Checks
 

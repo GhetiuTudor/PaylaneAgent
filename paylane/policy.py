@@ -58,3 +58,22 @@ def refund_eligibility(
     if amount != txn_amount:
         return False, "partial refunds are not supported"
     return True, "eligible"
+
+
+def refund_requires_human_review(*, status: str, age_days: int, txn_amount: float) -> bool:
+    """Whether a verified refund request must be handed to Support.
+
+    This is intentionally narrower than ``not refund_eligible``. For example,
+    an already-refunded transaction can be explained without creating a new
+    ticket, while the brief explicitly requires escalation for an old or
+    over-limit transaction. Pending transactions use the documented
+    conservative escalation assumption.
+    """
+    if status == "pending":
+        return True
+    if age_days >= MAX_AGE_DAYS:
+        return True
+    if txn_amount > REFUND_LIMIT:
+        return True
+    # An unknown status is not safe to resolve automatically.
+    return status not in {"settled", "refunded"}

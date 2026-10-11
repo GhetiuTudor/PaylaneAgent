@@ -7,13 +7,13 @@
 
 **Customer:** I want to close my account for good.
 
-  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: account closure request."})` -> `{"ticket_id": "TK-66b89815"}`
+  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: account closure request."})` -> `{"ticket_id": "TK-f5e41463"}`
 
-**Agent:** I’ve sent this to a support specialist, who’ll follow up with you.
+**Agent:** I understand that you want to close your account. A support specialist will follow up with you to assist with your account closure request. If there's anything else you'd like to share or ask in the meantime, feel free to let me know!
 
 **Customer:** mal@paylane.test, card ends 1212.
 
-**Agent:** This case is already with our support team. They’ll follow up with you.
+**Agent:** Thank you for providing the details. A support specialist will follow up with you regarding your account closure request. If you have any other questions or need further assistance, feel free to let us know!
 
 ## Checks
 

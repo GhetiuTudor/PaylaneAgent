@@ -7,7 +7,7 @@
 
 **Customer:** I want my money back for T2.
 
-**Agent:** Could you please provide the email on file and the last 4 digits of your card? I need to verify your account before proceeding with the refund request.
+**Agent:** Could you please provide the email on file and the last 4 digits of your card? I need this information to verify your account before proceeding with the refund request.
 
 **Customer:** Email bob@paylane.test, card ends 1111. It was $120.
 
@@ -15,9 +15,9 @@
 
   - _tool_ `get_transaction({"customer_id": "C-B", "txn_id": "T2"})` -> `{"amount": 120.0, "date": "2026-10-08", "merchant": "GadgetHub", "status": "settled", "age_days": 3, "auto_approvable": false, "auto_approvable_reason": "transaction is over the $75 auto-approve limit"}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-B", "summary": "Refund request for transaction T2 ($120) with GadgetHub, not auto-approvable due to amount exceeding $75 limit."})` -> `{"ticket_id": "TK-f5f031a5"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-B", "summary": "Refund request for transaction T2 of $120, not auto-approvable due to amount over $75 limit."})` -> `{"ticket_id": "TK-c1a114c6"}`
 
-**Agent:** I've escalated your refund request for transaction T2 to a human support agent because it exceeds our auto-approval limit. They'll follow up with you soon.
+**Agent:** I've forwarded your refund request for transaction T2 to a human support agent because it exceeds our auto-approval limit. They'll follow up with you soon.
 
 ## Checks
 

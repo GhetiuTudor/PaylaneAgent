@@ -11,6 +11,7 @@ bug introduced here can still fail the tests.
 
 from __future__ import annotations
 
+import math
 from datetime import date
 
 REFUND_LIMIT = 75.0   # [E] auto-approve "up to $75" -> inclusive
@@ -32,6 +33,11 @@ def refund_eligibility(
     txn_amount: float,
 ) -> tuple[bool, str]:
     """Return (ok, reason). ok=True only when a refund may be auto-approved."""
+    # Tool arguments are untrusted, even if a model schema says "number". In
+    # particular, comparisons with NaN are always false, so it must be rejected
+    # explicitly before the amount comparisons below.
+    if not math.isfinite(amount) or not math.isfinite(txn_amount):
+        return False, "refund amount must be a finite number"
     if not verified:
         return False, "customer is not verified"    # [E] verify before account action
     if status == "refunded":

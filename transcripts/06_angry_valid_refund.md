@@ -7,7 +7,7 @@
 
 **Customer:** This is RIDICULOUS. I've been charged for a ride I never took and I'm furious.
 
-**Agent:** I understand how frustrating that can be. Let's sort this out. Could you please provide the email on file and the last 4 digits of your card? Once I have that, I'll be able to assist you further.
+**Agent:** I understand how frustrating that must be. Let's sort this out. Could you please provide the email on file and the last 4 digits of your card? That way, I can look into the transaction for you.
 
 **Customer:** frank@paylane.test, card ends 5555. It's T6 for $40. Fix it NOW.
 
@@ -15,9 +15,9 @@
 
   - _tool_ `get_transaction({"customer_id": "C-F", "txn_id": "T6"})` -> `{"amount": 40.0, "date": "2026-10-06", "merchant": "RideNow", "status": "settled", "age_days": 5, "auto_approvable": true}`
 
-  - _tool_ `issue_refund({"txn_id": "T6", "amount": 40.0})` -> `{"ok": true, "refund_id": "RF-49b9f173"}`
+  - _tool_ `issue_refund({"txn_id": "T6", "amount": 40.0})` -> `{"ok": true, "refund_id": "RF-b848ff1c"}`
 
-**Agent:** I've processed a refund for the $40 charge from RideNow. You should see the amount back on your card soon. Let me know if there's anything else I can help with!
+**Agent:** I've processed the refund for the $40 charge from RideNow. You should see the amount back on your card soon. Let me know if there's anything else I can help with!
 
 ## Checks
 

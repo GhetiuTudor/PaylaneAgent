@@ -29,9 +29,14 @@ chat.py       <- interactive CLI for manual testing
 
 ## Key architecture decisions
 
-**Deterministic refund guard.** `issue_refund` is wrapped in a code-level check
+**Deterministic refund guard and human-only state.** `issue_refund` is wrapped in a code-level check
 that re-reads the transaction from the store and re-runs eligibility before
-allowing the call through. No unsafe refund can execute regardless of what the model asks for.
+allowing the call through. A refund cannot bypass verification, transaction
+status, age, amount, ownership, or a human-only session state, regardless of
+what the model asks for.
+Legal action, account closure, suspected fraud, and a verified frozen card enter
+an irreversible session state: one ticket is created and later turns cannot
+resume automated account handling or refunding.
 
 **Secrets scrubbed from tool results.** After `get_customer`, the dispatcher strips
 `card_last4` and `email` before returning to the model. The model still sees the
@@ -132,12 +137,8 @@ not depend on the model's judgment alone.
 This is a take-home proof of concept. Before handling real customers or moving
 money, I would complete the following work.
 
-### Make every policy action enforceable in code
+### Continue making every policy action enforceable in code
 
-- Add a per-conversation policy state machine. Once legal action, account
-  closure, a qualifying fraud report, or a frozen card is detected, block
-  `issue_refund` and account-detail tools as appropriate, create/confirm the
-  human ticket, and prevent the model from overriding that state.
 - Determine fraud amount from an authorised transaction lookup rather than
   trusting a number in the message. Define the safe behaviour while the amount
   or transaction is unknown (conservatively, escalate).

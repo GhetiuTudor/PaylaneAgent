@@ -100,6 +100,13 @@ def test_guard_blocks_double_refund():
     assert ref.result["ok"] is False
 
 
+def test_guard_blocks_non_finite_amount():
+    s = _run_refund(_store(amount=50.0), amount=float("nan"))
+    ref = [e for e in s.tool_events if e.name == "issue_refund"][0]
+    assert ref.result["ok"] is False and ref.blocked
+    assert s.store["transactions"]["T1"]["status"] == "settled"
+
+
 #  verification gate 
 
 def test_wrong_last4_is_not_verified():
@@ -181,3 +188,45 @@ def test_verification_resets_on_new_customer_lookup():
     agent.run_conversation(["email a@b.test card ends 4242"])
     assert session.state.verified is False          # C2 is NOT verified
     assert session.state.customer_id == "C2"        # customer_id did switch to C2
+
+
+# deterministic human-only state: a model cannot resume automated handling
+
+def test_frozen_card_creates_ticket_and_blocks_model_refund_attempt():
+    store = make_store(
+        [{"id": "C1", "email": "a@b.test", "name": "A", "card_last4": "4242", "status": "frozen"}],
+        [{"txn_id": "T1", "customer_id": "C1", "amount": 20.0,
+          "days_ago": 2, "merchant": "M", "status": "settled"}],
+    )
+    session = Session(store=store)
+    agent = Agent(FakeLLM([
+        _call("get_customer", email="a@b.test"),
+        # The agent must not reach this scripted, unsafe model action.
+        _call("issue_refund", txn_id="T1", amount=20.0),
+    ]), session)
+    agent.run_conversation(["email a@b.test card ends 4242; refund T1"])
+    assert session.safety.escalation_required is True
+    assert any(e.name == "escalate_to_human" for e in session.tool_events)
+    assert not any(e.name == "issue_refund" for e in session.tool_events)
+    assert store["transactions"]["T1"]["status"] == "settled"
+
+
+def test_legal_action_escalates_before_the_model_and_locks_future_turns():
+    store = _store()
+    session = Session(store=store)
+    agent = Agent(FakeLLM([]), session)
+    agent.run_conversation([
+        "My lawyer is going to sue Paylane.",
+        "email a@b.test card ends 4242; refund T1",
+    ])
+    assert session.safety.reason == "legal action mentioned"
+    assert len([e for e in session.tool_events if e.name == "escalate_to_human"]) == 1
+    assert not any(e.name in {"get_customer", "get_transaction", "issue_refund"}
+                   for e in session.tool_events)
+    assert store["transactions"]["T1"]["status"] == "settled"
+
+
+def test_high_risk_detector_covers_closure_and_fraud():
+    session = Session(store=_store())
+    assert session.high_risk_reason("Please close my account.") == "account closure request"
+    assert session.high_risk_reason("This charge is fraud.") == "suspected fraud report"

@@ -7,7 +7,7 @@
 
 **Customer:** Please refund my payment.
 
-**Agent:** Could you please provide the email on file and the last 4 digits of your card? Once I have that information, I can assist you further.
+**Agent:** Could you please provide the email on file and the last 4 digits of your card? This will help me verify your account and assist you with the refund.
 
 **Customer:** heidi@paylane.test, card ends 7777.
 

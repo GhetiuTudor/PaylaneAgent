@@ -74,10 +74,33 @@ The brief leaves several product decisions open. The agent chooses the safer pat
 
 ## Failures found and fixed
 
-- **30-day boundary:** the model treated an exactly-30-day-old transaction as refundable when it had to infer age from a date string. The guard blocked the refund; `age_days` is now computed in code.
-- **Narrated escalation:** the model sometimes promised a human follow-up without calling the escalation tool. The agent now returns `auto_approvable`, and the prompt requires an actual tool call for ineligible refunds.
-- **Partial-refund state mismatch:** the mock marked a transaction fully refunded even for a partial amount. The guard now permits only full refunds until a balance-aware ledger exists.
-- **Account-enumeration signal:** an unknown email and a wrong card ending previously produced distinguishable tool results. They now produce the same opaque failure result, and failed lookups revoke any prior verified session.
+The first two were found in real-model evaluation. The latter two came from
+adversarial review of the tool and session boundaries. In each case, the
+deterministic guard meant a model mistake was an observable behaviour bug—not a
+financial or privacy incident (even when the model made mistakes the money moves were prevented by the harness)
+
+- **Exactly 30 days old — do not ask the model to do policy arithmetic.** The
+  model treated a transaction at the boundary as refundable when it inferred
+  its age from a date string. That would produce inconsistent customer outcomes
+  around a hard cutoff. The guard had already prevented the refund, it now
+  calculates `age_days` in code and makes day 30 human-only.
+- **Narrated escalation — a promise is not a handoff.** `gpt-4o-mini` could say
+  that a specialist would follow up without creating an escalation. The risk
+  was a customer expecting help while no ticket existed. Refund eligibility is
+  now returned as an explicit `auto_approvable` decision, and the prompt and
+  evaluation require the real escalation tool call. The submitted `gpt-4o`
+  baseline completes all 17 cases in three consecutive runs.
+- **Partial-refund state mismatch — refuse what the ledger cannot represent.**
+  The mock API has only a binary `refunded` state. A partial refund could have
+  marked the entire transaction refunded, obscuring the remaining balance and
+  future refund eligibility. The guard accepts full refunds only until a
+  balance-aware refund ledger exists. (supplied by the client)
+- **Account enumeration and stale identity — fail closed.** An unknown email
+  and an incorrect card ending originally produced distinguishable results, and
+  a failed lookup could leave an earlier verified identity in session state.
+  That could leak account existence or blur customer boundaries. Both failures
+  now return the same opaque result, and every verification attempt clears the
+  prior verified session before checking credentials.
 
 ## Before production
 

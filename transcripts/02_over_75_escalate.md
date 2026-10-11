@@ -15,7 +15,7 @@
 
   - _tool_ `get_transaction({"customer_id": "C-B", "txn_id": "T2"})` -> `{"amount": 120.0, "date": "2026-10-08", "merchant": "GadgetHub", "status": "settled", "age_days": 3, "auto_approvable": false, "auto_approvable_reason": "transaction is over the $75 auto-approve limit"}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-B", "summary": "Customer requests a refund for transaction T2 ($120) with GadgetHub, but it exceeds the auto-approve limit."})` -> `{"ticket_id": "TK-e6882338"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-B", "summary": "Customer requests a refund for transaction T2 ($120) with GadgetHub, but it exceeds the auto-approve limit."})` -> `{"ticket_id": "TK-7d42a7d6"}`
 
 **Agent:** I've escalated your refund request to a human support agent because it exceeds our auto-approve limit. They'll follow up with you soon.
 

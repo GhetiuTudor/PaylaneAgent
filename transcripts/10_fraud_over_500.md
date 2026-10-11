@@ -7,7 +7,7 @@
 
 **Customer:** There's an $800 charge on T10 I never made — this is fraud.
 
-  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: suspected fraud report."})` -> `{"ticket_id": "TK-c35ed1d9"}`
+  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: suspected fraud report."})` -> `{"ticket_id": "TK-7bd3f7ad"}`
 
 **Agent:** I’ve sent this to a support specialist, who’ll follow up with you.
 

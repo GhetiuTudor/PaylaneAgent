@@ -1,63 +1,62 @@
 To: Head of Support, Paylane
 From: Tudor Ghetiu
-Subject: Support agent- what it does, what it won't, and what I need from you
+Subject: Support-agent pilot: current scope and decisions needed
 
 Hi,
 
-Here's a summary of the support agent before we talk about going live.
+Before we discuss a pilot, here is the exact scope of the first version and the
+few policy decisions I need from Support before launch.
 
+What the agent can do today
 
-What it does
+- Verify a customer before sharing account information or acting on a refund.
+  It asks for the email on file and the last four card digits. An unknown email
+  and incorrect credentials receive the same generic failure response, so the
+  agent does not reveal whether an account exists.
+- Issue a full refund when the customer is verified and the transaction is
+  settled, not already refunded, less than 30 days old, and $75 or less.
+- Ask a short clarifying question when a refund request does not identify the
+  transaction.
+- Create one support ticket and stop automated account handling for legal
+  action, suspected fraud, account closure, transfer requests, and verified
+  frozen cards.
 
-The agent handles the most common support requests on its own:
-- It asks every customer for their email and last 4 card digits before doing
-  anything. If they don't match what's on file, it shares nothing and takes no
-  action - no exceptions.
-- It issues refunds automatically when the transaction is settled, under 30 days
-  old, $75 or less, and hasn't already been refunded.
-- For everything else it can't handle, it creates a ticket and hands the case to
-  your team with a short summary of the conversation.
+What it will not do
 
-What it won't do
+- It will not refund an over-limit, old, pending, already-refunded, or partial
+  transaction. The current mock ledger supports full refunds only.
+- It will not unfreeze a card or invent a reason for a freeze.
+- It will not process a transfer; transfers are routed to a specialist.
+- It will not override policy because a customer is persistent, upset, or
+  claims authority. A code-level guard independently checks every refund before
+  any money moves.
 
-- It won't refund anything over $75 or older than 30 days, those go straight to
-  your team.
-- It won't unfreeze a card, and it won't guess why a card was frozen. It tells the
-  customer the card is frozen and escalates.
-- It won't act on anything involving legal threats, fraud claims over $500, or
-  account closure, those go to a human immediately.
-- It won't promise anything the policy doesn't cover.
+Decisions needed from Support
 
-One important note on safety: even if the AI model makes a mistake and tries to
-issue a refund it shouldn't, a hard code-level check will block it. Refunds that shouldn't happen
-won't happen regardless of what the model says.
+I have chosen conservative defaults where the brief is silent. Please confirm
+or revise the following before production:
 
----
+1. Pending transactions: should they always be escalated, or can they be
+   refunded before settlement?
+2. Frozen cards: should every refund request be escalated while a card is
+   frozen? If Support wants the agent to explain a freeze, please add an
+   approved customer-safe `freeze_reason` field to the API.
+3. Fraud under $500: I currently escalate every suspected fraud report because
+   the amount in a customer message is not authoritative. Should smaller claims
+   follow a different route?
+4. Partial refunds: should they be supported? If so, the payment API needs a
+   remaining refundable balance and atomic partial-refund handling.
+5. Boundaries: I interpret “up to $75” as inclusive and “under 30 days” as
+   exclusive. Please confirm both interpretations and the applicable timezone.
+6. Verification abuse: should failed verification attempts be rate-limited or
+   escalated? Please specify the threshold and cooldown.
+7. Cumulative refunds: should there be a per-customer automated-refund cap over
+   a rolling period? If so, please confirm the amount and time window.
+8. Escalation operations: please identify the receiving queue, expected
+   follow-up process, and any customer language Support has approved.
 
-What I need from you before launch
+Once these are confirmed, I can encode the decisions in the guard, evaluation
+cases, and customer-facing wording.
 
-I made a few calls where the brief didn't give me a clear answer. I went
-conservative, but you should confirm these before we go live:
-
-1. Frozen card + eligible refund: right now any action on a frozen card goes to
-   your team. If a customer with a frozen card has a refund that would otherwise
-   qualify, should it still go through, or should frozen always mean escalate?
-
-2. Pending transactions: the agent won't refund a charge that hasn't settled yet.
-   Is that the right call, or should it handle pending differently?
-
-3. Fraud under $500: the brief says fraud over $500 goes to a human. I treat all
-   fraud claims as escalations regardless of amount. Should smaller fraud claims
-   follow the normal refund rules instead?
-
-4. Freeze reason: the brief mentions the agent can explain why a card is frozen,
-   but the API doesn't return a reason, just that the card is frozen. If you want
-   the agent to communicate the reason, that field needs to be added to the API.
-
-5. The $75 and 30-day boundaries: I treated $75 as inclusive (a $75 charge
-   qualifies) and 30 days as exclusive (a charge from exactly 30 days ago does
-   not). Please confirm that's right.
-
-That's it. Happy to do a demo or adjust any of the above once I hear back.
-
+Thanks,
 Tudor

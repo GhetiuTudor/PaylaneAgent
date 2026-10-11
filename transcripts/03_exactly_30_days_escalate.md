@@ -15,7 +15,7 @@
 
   - _tool_ `get_transaction({"customer_id": "C-C", "txn_id": "T3"})` -> `{"amount": 30.0, "date": "2026-09-11", "merchant": "CafeNine", "status": "settled", "age_days": 30, "auto_approvable": false, "auto_approvable_reason": "transaction is 30 days or older"}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-C", "summary": "Refund request for transaction T3 ($30) cannot be auto-approved as it is 30 days or older."})` -> `{"ticket_id": "TK-f35d9b1d"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-C", "summary": "Refund request for transaction T3 ($30) cannot be auto-approved due to age. Needs human review."})` -> `{"ticket_id": "TK-fb485c1c"}`
 
 **Agent:** I've escalated your refund request for transaction T3 to a human support agent, as it requires further review. They'll follow up with you soon.
 

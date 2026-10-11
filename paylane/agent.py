@@ -36,6 +36,7 @@ CLOSURE_RE = re.compile(
 # is not an authoritative source for the amount, so this first pass takes the
 # safer documented product assumption: every suspected fraud report is human-only.
 FRAUD_RE = re.compile(r"\b(fraud|fraudulent|unauthori[sz]ed|charge .* never (?:made|authorized))\b", re.IGNORECASE)
+TRANSFER_RE = re.compile(r"\btransfer(?:s|ring|red)?\b", re.IGNORECASE)
 
 SYSTEM_PROMPT = """\
 You are Paylane's support agent for cards, transfers and refunds.
@@ -53,10 +54,14 @@ VERIFICATION (required before you share or act on any account detail):
 - Never repeat back, echo, or reveal the email or the card digits in your replies,
   even to a verified customer. Do not say "your card ending in 1234" or similar.
   Do not share account details with an unverified customer.
+- If get_customer returns verified: false, say only: "I couldn’t verify those
+  details. Please check them and try again." Never say whether an account or
+  email exists, or which detail was incorrect.
 
 - get_transaction returns age_days and auto_approvable. Use auto_approvable
   directly — do not re-evaluate eligibility yourself.
-- If auto_approvable is true, call issue_refund.
+- If auto_approvable is true, call issue_refund for the full transaction amount.
+  Partial refunds are not supported by this proof of concept.
 - If auto_approvable is false, do NOT call issue_refund. Your very next action
   must be to call escalate_to_human — do not reply to the customer first. Then
   tell them a human will follow up.
@@ -74,6 +79,8 @@ ALWAYS ESCALATE (call escalate_to_human):
   if the customer is not yet verified. Do not reply first — call the tool first.
 - Refunds you cannot auto-approve, and frozen cards — these require the customer
   to be verified first, because they are account-specific actions.
+- Transfers are out of scope for this proof of concept. Escalate any transfer
+  request without attempting account handling.
 - Escalating means actually calling the escalate_to_human tool. Saying "I've
   escalated" or "a human will follow up" without making the tool call is wrong.
   You must make the tool call.
@@ -199,6 +206,8 @@ class Session:
             return "account closure request"
         if FRAUD_RE.search(text):
             return "suspected fraud report"
+        if TRANSFER_RE.search(text):
+            return "transfer request"
         return None
 
 
@@ -289,16 +298,18 @@ class Agent:
         return {"error": "unknown_tool"}
 
     def _do_get_customer(self, email: str) -> dict:
+        # Every lookup, including an unknown email, revokes any previous
+        # verification. This avoids carrying a verified state into a failed
+        # identity switch.
+        self.s.state.verified = False
+        self.s.state.customer_id = None
+        self.s.state.customer_status = None
         record = tools.get_customer(self.s.store, email)
         if "error" in record:
-            self._log("get_customer", {"email": email}, record)
-            return record
+            safe = {"verified": False}
+            self._log("get_customer", {"email": email}, safe)
+            return safe
 
-        # Reset: each get_customer call starts fresh so a prior verified session
-        # cannot carry over to a different customer.
-        self.s.state.verified = False
-        self.s.state.customer_id = record["id"]
-        self.s.state.customer_status = None
         # Deterministic verification: email on file and last4 both match.
         verified = (
             self.s.state.claimed_email is not None
@@ -307,6 +318,7 @@ class Agent:
         )
         if verified:
             self.s.state.verified = True
+            self.s.state.customer_id = record["id"]
             self.s.state.customer_status = record["status"]
 
         # Scrub: never expose email or card_last4, hide details until verified.
@@ -314,7 +326,7 @@ class Agent:
             safe = {"id": record["id"], "name": record["name"],
                     "status": record["status"], "verified": True}
         else:
-            safe = {"id": record["id"], "verified": False}
+            safe = {"verified": False}
         self._log("get_customer", {"email": email}, safe)
         if self.s.state.verified and record["status"] == "frozen":
             self._require_human("frozen card")

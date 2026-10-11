@@ -7,7 +7,7 @@
 
 **Customer:** I want to close my account for good.
 
-  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: account closure request."})` -> `{"ticket_id": "TK-57615a9e"}`
+  - _tool_ `escalate_to_human({"customer_id": "unknown", "summary": "Human review required: account closure request."})` -> `{"ticket_id": "TK-1832ee84"}`
 
 **Agent:** I’ve sent this to a support specialist, who’ll follow up with you.
 

@@ -52,4 +52,9 @@ def refund_eligibility(
         return False, "transaction is over the $75 auto-approve limit"  # [E] above $75 -> escalate
     if amount > txn_amount:
         return False, "refund exceeds the transaction amount"  # [B] no over-refund
+    # The mock transaction state is either settled or refunded; it does not
+    # record a remaining balance. Supporting partial refunds would therefore
+    # risk marking a partially refunded transaction as fully refunded.
+    if amount != txn_amount:
+        return False, "partial refunds are not supported"
     return True, "eligible"

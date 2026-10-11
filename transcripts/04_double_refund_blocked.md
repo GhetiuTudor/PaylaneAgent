@@ -15,9 +15,7 @@
 
   - _tool_ `get_transaction({"customer_id": "C-D", "txn_id": "T4"})` -> `{"amount": 20.0, "date": "2026-10-07", "merchant": "BookNest", "status": "refunded", "age_days": 4, "auto_approvable": false, "auto_approvable_reason": "transaction already refunded"}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-D", "summary": "Customer inquired about refund for transaction T4, which is already refunded. Needs human follow-up."})` -> `{"ticket_id": "TK-ae1033ef"}`
-
-**Agent:** It looks like the refund for transaction T4 has already been processed. I've escalated this to a human agent to double-check everything for you. They'll follow up soon.
+**Agent:** It looks like the transaction T4 has already been refunded. If you have any further questions or concerns, I'll escalate this to a human support agent to assist you further.
 
 ## Checks
 

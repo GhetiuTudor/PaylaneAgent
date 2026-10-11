@@ -9,7 +9,7 @@
 
   - _tool_ `get_customer({"email": "grace@paylane.test"})` -> `{"id": "C-G", "name": "Customer G", "status": "frozen", "verified": true}`
 
-  - _tool_ `escalate_to_human({"customer_id": "C-G", "summary": "Human review required: frozen card."})` -> `{"ticket_id": "TK-f81a45e8"}`
+  - _tool_ `escalate_to_human({"customer_id": "C-G", "summary": "Human review required: frozen card."})` -> `{"ticket_id": "TK-bc067771"}`
 
 **Agent:** I’ve sent this to a support specialist, who’ll follow up with you.
 

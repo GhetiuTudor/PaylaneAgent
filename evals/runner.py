@@ -1,4 +1,4 @@
-"""Run the 12 evaluation conversations against a real LLM, capture transcripts,
+"""Run the 17 evaluation conversations against a real LLM, capture transcripts,
 apply hard (safety) checks and a soft (tone) note, and print a score.
 
 Usage:

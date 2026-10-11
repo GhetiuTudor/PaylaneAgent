@@ -90,12 +90,25 @@ the frozen-card explanation capability is intentionally unavailable.
 ### Known prototype limitation: one active case per chat
 
 When a verified refund needs human review, this prototype creates the ticket in
-code and ends automated account actions for the rest of that chat. The model can
-still explain the handoff in a tool-free mode, but it cannot reopen the refund
-or start another automated request. This is deliberate: real-model testing
-found that a model could promise a human follow-up without creating a ticket,
-and a normal tool-enabled conversation could later retry the declined refund
-under customer pushback, which could cause more problems than it solves. 
+code and ends automated account actions for the rest of that chat. This is two
+separate protections:
+
+1. **Create the ticket deterministically.** Without this, a model could tell a
+   customer that Support will follow up without ever calling
+   `escalate_to_human`; no case would actually reach Support. (I have noticed this even when testing with models
+   like gpt-5.6-terra, despite the promt being very clear)
+3. **Lock actions after the ticket exists.** Without this, a later pushback
+   message could make the model retry `issue_refund`, fetch more account data,
+   or give contradictory answers. The refund guard would still stop money from
+   moving, but the customer experience would be unreliable.
+
+The model can still explain the handoff in a tool-free mode, but it cannot
+reopen the refund or start another automated request. That is the safest design
+available with the supplied four tools: it avoids a false handoff or a reopened
+decision without inventing an unsupported case-management workflow. 
+
+I would rather talk about this with the client and come to a conclusion based on their 
+needs than risk the agent lying to the user and call my solution "perfect UX".
 
 The trade-off is that an unrelated eligible request—for example, refunding T100
 after T101 was escalated—must start in a new chat. Before production, I would

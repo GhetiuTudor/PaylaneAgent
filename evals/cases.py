@@ -1,6 +1,6 @@
 """The 12 evaluation conversations.
 
-Each case states its OWN expectations (required/forbidden tool calls, whether a
+Each case states its own expectations (required/forbidden tool calls, whether a
 refund should execute, which secrets must never leak). These expectations are
 written by hand from the policy, NOT computed from paylane.policy, so a bug in the
 production policy logic can still make a case fail.
@@ -17,7 +17,7 @@ from paylane.tools import make_store
 class Case:
     id: str
     title: str
-    slug: str                          # clean short name used for the transcript filename
+    slug: str  # clean short name used for the transcript filename
     tag: str  # [E] explicit policy | [B] conservative assumption | trap
     why: str
     store: dict

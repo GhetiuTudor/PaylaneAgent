@@ -20,7 +20,7 @@ def _call(name, **args):
     return ChatResult(tool_calls=[ToolCall(id="x", name=name, arguments=args)])
 
 
-# --- policy unit tests ------------------------------------------------------
+#  policy unit tests 
 
 def test_eligibility_happy():
     assert refund_eligibility(verified=True, status="settled", age_days=5,
@@ -40,7 +40,7 @@ def test_eligibility_boundaries():
                               amount=10, txn_amount=10)[0] is False
 
 
-# --- guard blocks ineligible refunds even if the model asks ----------------
+# guard blocks ineligible refunds even if the model asks 
 
 def _run_refund(store, claim_email="a@b.test", claim_last4="4242", amount=50.0):
     session = Session(store=store)
@@ -84,7 +84,7 @@ def test_guard_blocks_double_refund():
     assert ref.result["ok"] is False
 
 
-# --- verification gate ------------------------------------------------------
+#  verification gate 
 
 def test_wrong_last4_is_not_verified():
     s = _run_refund(_store(), claim_last4="0000", amount=10.0)

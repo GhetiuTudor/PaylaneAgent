@@ -1,4 +1,4 @@
-# Paylane Support Agent — PoC
+# Paylane Support Agent - PoC
 
 AI support agent for Paylane (cards, transfers, refunds). Handles verification,
 auto-refunds, and escalation. Built as a take-home assignment.
@@ -31,8 +31,7 @@ chat.py       <- interactive CLI for manual testing
 
 **Deterministic refund guard.** `issue_refund` is wrapped in a code-level check
 that re-reads the transaction from the store and re-runs eligibility before
-allowing the call through. The model's judgment is a first line; this is the
-backstop. No unsafe refund can execute regardless of what the model asks for.
+allowing the call through. No unsafe refund can execute regardless of what the model asks for.
 
 **Secrets never reach the model.** After `get_customer`, the dispatcher strips
 `card_last4` and `email` before returning to the model. Even a jailbroken model
@@ -67,15 +66,15 @@ export OPENAI_API_KEY=sk-...
 python -m evals.runner                    # all 12, gpt-4o
 python -m evals.runner --only 05 07      # subset by case ID
 
-# Interactive CLI
+# Interactive CLI with preset personas 
 python chat.py
 ```
 
 ---
 
-## Failure found and fixed
+## Failures found and fixed
 
-**Case 03 — 30-day-old transaction, must escalate. First run: FAIL.**
+**Run 1 — Case 03 — 30-day-old transaction, must escalate. FAIL.**
 
 The model attempted `issue_refund` on a charge that was exactly 30 days old and
 did not escalate. The refund guard blocked it (`ok: false, age_days >= 30`) — no
@@ -84,10 +83,31 @@ money moved — but the behavior was wrong.
 **Root cause:** `get_transaction` returned a raw ISO date. The model had to compute
 the age itself and got the boundary wrong. LLMs are unreliable at date arithmetic.
 
-**Fix:** The dispatcher now computes `age_days` and includes it in the result.
-The system prompt was updated to use `age_days` directly and to be explicit that
-`>= 30` is not eligible and requires `escalate_to_human`.
+**Fix:** The dispatcher now computes `age_days` and appends it to the result.
+The system prompt was tightened to use `age_days` directly: `>= 30` is not
+eligible, and the model must call `escalate_to_human`, not just say it will.
 
-**Eval unchanged** — same oracle, same expectations. Re-run: 12/12.
+Eval unchanged. Case 03: PASS. Score after fix: 10/12.
 
-**Principle:** Code computes facts. The model orchestrates and talks.
+
+**Run 2 — Cases 02 and 09 — over-$75 refund and legal action, must escalate. FAIL.**
+
+After the age_days fix, two different cases failed. The model reasoned correctly
+(no forbidden calls, no unsafe refund attempted) but narrated the escalation in
+text instead of calling `escalate_to_human`. Different cases flaked on each run —
+`temperature=0` does not make `gpt-4o-mini` fully deterministic.
+
+**Root cause:** Model reliability. `gpt-4o-mini` is inconsistent on soft escalation
+triggers (amount thresholds, legal language), it knows what to do but doesn't
+always make the tool call.
+
+**Fix:** Two things: prompt hardening ("escalating means calling the tool — saying
+a human will follow up is not enough") and switching the canonical run to `gpt-4o`.
+
+Safety was never at risk because the refund guard blocked every unsafe call in every run
+on every model. This was purely a behavioral/tool-calling reliability issue.
+
+Score after fix: **12/12**.
+
+**Principle:** Code computes facts. The model orchestrates and talks. Safety must
+not depend on the model's judgment alone. 

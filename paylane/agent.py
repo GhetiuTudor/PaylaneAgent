@@ -217,7 +217,7 @@ class Agent:
             ],
         }
 
-    # --- dispatch: verification, gating, scrubbing, guard -------------------
+    # dispatch: verification, gating, scrubbing, guard
 
     def _dispatch(self, name: str, args: dict[str, Any]) -> dict:
         if name == "get_customer":

@@ -40,8 +40,10 @@ def refund_eligibility(
         return False, "transaction is not settled"   # [B] pending/other not refundable
     if age_days >= MAX_AGE_DAYS:
         return False, "transaction is 30 days or older"   # [E] older than 30 days -> escalate
-    if amount > REFUND_LIMIT:
-        return False, "amount is over the $75 auto-approve limit"  # [E] above $75 -> escalate
+    if amount <= 0:
+        return False, "refund amount must be positive"  # [B] reject zero/negative
+    if txn_amount > REFUND_LIMIT:
+        return False, "transaction is over the $75 auto-approve limit"  # [E] above $75 -> escalate
     if amount > txn_amount:
         return False, "refund exceeds the transaction amount"  # [B] no over-refund
     return True, "eligible"

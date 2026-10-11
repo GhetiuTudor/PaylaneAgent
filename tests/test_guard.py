@@ -30,14 +30,30 @@ def test_eligibility_happy():
 def test_eligibility_boundaries():
     assert refund_eligibility(verified=True, status="settled", age_days=30,
                               amount=10, txn_amount=10)[0] is False
+    # txn_amount over $75 -> reject even if requested amount is under $75
     assert refund_eligibility(verified=True, status="settled", age_days=5,
-                              amount=75.01, txn_amount=100)[0] is False
+                              amount=75, txn_amount=100)[0] is False
     assert refund_eligibility(verified=True, status="pending", age_days=1,
                               amount=10, txn_amount=10)[0] is False
     assert refund_eligibility(verified=True, status="refunded", age_days=1,
                               amount=10, txn_amount=10)[0] is False
     assert refund_eligibility(verified=False, status="settled", age_days=1,
                               amount=10, txn_amount=10)[0] is False
+
+
+def test_eligibility_rejects_zero_and_negative():
+    assert refund_eligibility(verified=True, status="settled", age_days=5,
+                              amount=0, txn_amount=50)[0] is False
+    assert refund_eligibility(verified=True, status="settled", age_days=5,
+                              amount=-10, txn_amount=50)[0] is False
+
+
+def test_partial_refund_on_over_75_txn_blocked():
+    """Requesting $75 on a $120 transaction must be rejected — the transaction itself is over $75."""
+    ok, reason = refund_eligibility(verified=True, status="settled", age_days=5,
+                                    amount=75, txn_amount=120)
+    assert ok is False
+    assert "75" in reason
 
 
 # guard blocks ineligible refunds even if the model asks 

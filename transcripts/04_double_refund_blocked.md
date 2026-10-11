@@ -13,9 +13,11 @@
 
   - _tool_ `get_customer({"email": "dan@paylane.test"})` -> `{"id": "C-D", "name": "Customer D", "status": "active", "verified": true}`
 
-  - _tool_ `get_transaction({"customer_id": "C-D", "txn_id": "T4"})` -> `{"amount": 20.0, "date": "2026-10-07", "merchant": "BookNest", "status": "refunded", "age_days": 4}`
+  - _tool_ `get_transaction({"customer_id": "C-D", "txn_id": "T4"})` -> `{"amount": 20.0, "date": "2026-10-07", "merchant": "BookNest", "status": "refunded", "age_days": 4, "auto_approvable": false, "auto_approvable_reason": "transaction already refunded"}`
 
-**Agent:** The transaction T4 has already been refunded. If you have any further questions or need assistance, please let me know!
+  - _tool_ `escalate_to_human({"customer_id": "C-D", "summary": "Customer claims refund for transaction T4 did not come through, but transaction is already marked as refunded. Needs human review."})` -> `{"ticket_id": "TK-f460f8de"}`
+
+**Agent:** It looks like the transaction is already marked as refunded, but I'll have a human support agent take a closer look to ensure everything is sorted out. They'll follow up with you soon.
 
 ## Checks
 

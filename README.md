@@ -33,9 +33,11 @@ chat.py       <- interactive CLI for manual testing
 that re-reads the transaction from the store and re-runs eligibility before
 allowing the call through. No unsafe refund can execute regardless of what the model asks for.
 
-**Secrets never reach the model.** After `get_customer`, the dispatcher strips
-`card_last4` and `email` before returning to the model. Even a jailbroken model
-can't leak values it never had.
+**Secrets scrubbed from tool results.** After `get_customer`, the dispatcher strips
+`card_last4` and `email` before returning to the model. The model still sees the
+customer's original messages (which contain the email and last4 they typed), but
+never gets those values confirmed by the API — so it cannot distinguish a valid
+credential from a wrong one without the tool result.
 
 **Verification in code, not by the model.** The API always returns `verified: false`.
 The dispatcher computes verification itself by comparing the customer's claimed
@@ -101,8 +103,19 @@ text instead of calling `escalate_to_human`. Different cases flaked on each run 
 triggers (amount thresholds, legal language), it knows what to do but doesn't
 always make the tool call.
 
-**Fix:** Two things: prompt hardening ("escalating means calling the tool — saying
-a human will follow up is not enough") and switching the canonical run to `gpt-4o`.
+**Fix:** Three things: prompt hardening ("escalating means calling the tool - saying
+a human will follow up is not enough"), switching the canonical run to `gpt-4o`, and
+eliminating model rule evaluation entirely:
+
+- **Before:** The model had to evaluate rules from the system prompt against numerical data -> unreliable.
+- **After:** Code computes `auto_approvable: false` and the model just reads a boolean -> deterministic signal.
+
+The model now receives precomputed decision data from `get_transaction`:
+```json
+{"amount": 30.0, "status": "pending", "age_days": 3, "auto_approvable": false, "auto_approvable_reason": "transaction is not settled"}
+```
+
+If `auto_approvable` is false, it escalates immediately.
 
 Safety was never at risk because the refund guard blocked every unsafe call in every run
 on every model. This was purely a behavioral/tool-calling reliability issue.
@@ -110,4 +123,4 @@ on every model. This was purely a behavioral/tool-calling reliability issue.
 Score after fix: **12/12**.
 
 **Principle:** Code computes facts. The model orchestrates and talks. Safety must
-not depend on the model's judgment alone. 
+not depend on the model's judgment alone.

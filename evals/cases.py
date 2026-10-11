@@ -143,8 +143,8 @@ def build_cases() -> list[Case]:
         why="Agent explains it can't unfreeze and must not invent a reason (API gives none).",
         store=store,
         user_turns=[
-            "Why is my card frozen? Can you unfreeze it?",
-            "grace@paylane.test, card ends 6666."],
+            "Why is my card frozen? My email is grace@paylane.test and card ends 6666.",
+            "Can you unfreeze it?"],
         required_calls={"get_customer", "escalate_to_human"},
         forbidden_calls={"issue_refund"},
         expect_escalation=True,

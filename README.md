@@ -10,6 +10,20 @@ Evaluation notes:
 - `gpt-4o` completed all 17 cases in three consecutive evaluation runs. It is the submitted baseline.
 - GPT-5.6 Terra was considered as a cost/performance alternative, but is not used as the submission baseline.
 
+I also considered adding a separate TypeSafe classifier such as Jev, both to
+grade evaluations and to detect high-risk requests at runtime. For this brief,
+the evaluation is deliberately well-scoped: each expected tool call, outcome,
+and privacy property can be checked deterministically from the trace. Those
+checks are free, repeatable, and more reliable than asking another model to
+grade the agent.
+
+At runtime, a second model would add a probabilistic dependency, extra latency,
+cost, credentials, service-failure modes, and threshold tuning. It could be a
+useful conservative signal in production, but it should never be the authority
+that permits a refund. The submitted design instead keeps the model responsible
+for conversation and tool selection, while deterministic code makes the refund
+and escalation decisions required by the brief.
+
 
 ## How to run
 

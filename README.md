@@ -175,6 +175,7 @@ financial or privacy incident (even when the model made mistakes the money moves
 ## Before production
 
 - Replace email-plus-card-last-four verification with authenticated sessions or approved step-up verification.
+- Replace keyword-based high-risk detection with a tested, monitored classifier and conservative routing. It may trigger a handoff, but must never authorize a refund.
 - Use a durable payment ledger with atomic, idempotent refund operations and provider refund-state handling.
 - Move escalation to a durable, retryable service with idempotency and customer-safe outage handling.
 - Keep PII out of model context and logs where possible; implement retention, access control, and audit requirements.
